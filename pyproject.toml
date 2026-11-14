@@ -1,0 +1,20 @@
+[project]
+name = "hotstar-scale-lab"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["infra", "loadtest"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "BLE"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["conftest", "config", "work", "stats", "degrade", "ratelimit", "imds", "main"]
+
+[tool.pytest.ini_options]
+pythonpath = ["app"]
+testpaths = ["app/tests"]
+markers = ["slow: CPU-timing tests, skipped in CI"]

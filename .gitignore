@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Terraform / Packer
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl.bak
+crash.log
+packer_cache/
+manifest.json
+.backend.hcl
+.env.tf
+
+# Results: raw data stays in S3, summaries are committed
+results/*/*/raw/
+results/**/k6.csv.gz
+results/**/*.parquet
+results/FAKE_*/
+
+# Secrets and local env
+.env
+*.pem
+*.key
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

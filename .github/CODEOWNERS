@@ -1,0 +1,30 @@
+# Folder ownership (docs/TEAM_PLAN_3_PEOPLE.md §1.1).
+# Replace the role names with GitHub usernames, then uncomment each line.
+# GitHub will then auto-request the owner as reviewer when someone else touches their files.
+#
+# /infra/                      @<A-username>
+# /config/prices.yaml          @<A-username>
+# /config/model.yaml           @<A-username>
+# /analysis/cost_model.py      @<A-username>
+# /docs/sources.md             @<A-username>
+# /docs/runbook.md             @<A-username>
+# /README.md                   @<A-username>
+# /make/infra.mk               @<A-username>
+#
+# /app/                        @<B-username>
+# /web/                        @<B-username>
+# /scripts/                    @<B-username>
+# /.github/                    @<B-username>
+# /analysis/parse_k6.py        @<B-username>
+# /analysis/make_plots.py      @<B-username>
+# /analysis/export_results.py  @<B-username>
+# /make/app.mk                 @<B-username>
+# /make/analysis.mk            @<B-username>
+#
+# /loadtest/                   @<C-username>
+# /automation/                 @<C-username>
+# /config/experiments.yaml     @<C-username>
+# /analysis/fake_run.py        @<C-username>
+# /docker-compose.yml          @<C-username>
+# /results/                    @<C-username>
+# /make/lab.mk                 @<C-username>

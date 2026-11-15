@@ -1,0 +1,3 @@
+# Loadgen / laptop dependencies for the harness (the loadgen user_data installs these with python3.11).
+boto3>=1.35
+pyyaml>=6.0

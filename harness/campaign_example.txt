@@ -1,0 +1,14 @@
+# One run per line: exp.sh arguments (EXP RUN [N|VARIANT]). Comments and blank lines are ignored.
+# Day-5 style E2a sweep: alternate the order of N to cancel drift (plan §7.2).
+E2a 1 1
+E2a 1 2
+E2a 1 3
+E2a 1 4
+E2a 1 5
+E2a 2 5
+E2a 2 4
+E2a 2 3
+E2a 2 2
+E2a 2 1
+E3 1
+E4c 1

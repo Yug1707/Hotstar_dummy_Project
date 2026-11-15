@@ -1,0 +1,8 @@
+# Same rules as the repo root, plus the harness modules as first-party imports.
+extend = "../pyproject.toml"
+
+[lint.isort]
+known-first-party = [
+  "common", "asg_mode", "monitor_asg", "proactive_scaler", "collect_cw", "fleet", "sample_cpu", "exp_config", "lab_lock",
+  "fakes",
+]

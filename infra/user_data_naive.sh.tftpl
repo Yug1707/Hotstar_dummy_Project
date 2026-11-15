@@ -1,0 +1,40 @@
+#!/bin/bash
+# Naive boot (E5 baseline): stock AL2023, install Docker and pull the image at boot.
+# Each step is timestamped in /var/log/hsl-boot.log: "<step> <epoch_s> <os_uptime_s>".
+set -euo pipefail
+LOG=/var/log/hsl-boot.log
+mark() { echo "$1 $(date +%s.%N) $(cut -d' ' -f1 /proc/uptime)" >>"$LOG"; }
+mark userdata_start
+
+dnf install -y docker
+mark docker_installed
+
+systemctl enable --now docker
+mark docker_started
+
+for attempt in 1 2 3 4 5; do
+  if docker pull ${image}; then break; fi
+  if [ "$attempt" -eq 5 ]; then mark image_pull_failed; exit 1; fi
+  sleep $((attempt * 3))
+done
+mark image_pulled
+
+cat >/etc/streamlite.env <<EOF
+WORK_SCALE=${work_scale}
+WEB_CONCURRENCY=${web_concurrency}
+AWS_REGION=${region}
+SSM_MODE=on
+EOF
+chmod 0644 /etc/streamlite.env
+mark env_written
+
+docker run -d --name streamlite --restart always --network host \
+  --env-file /etc/streamlite.env --log-opt max-size=50m --log-opt max-file=2 \
+  ${image}
+mark container_started
+
+for _ in $(seq 1 600); do
+  if curl -sf -o /dev/null http://127.0.0.1:8000/healthz; then mark app_healthy; exit 0; fi
+  sleep 0.1
+done
+mark app_not_healthy_after_60s

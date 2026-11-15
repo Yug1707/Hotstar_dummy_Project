@@ -207,12 +207,12 @@ hotstar-scale-lab/
   app/      main.py config.py work.py stats.py degrade.py ratelimit.py imds.py
             requirements.txt requirements-dev.txt Dockerfile tests/
   web/      index.html app.js styles.css data/results.json img/architecture.svg
-  scripts/  doctor.sh calibrate.py smoke.sh
-  infra/terraform/  versions.tf backend.tf variables.tf network.tf iam.tf ssm.tf alb.tf asg.tf
-                    site.tf cloudfront.tf loadgen.tf budgets.tf outputs.tf
-                    templates/{user_data_baked.sh.tftpl,user_data_naive.sh.tftpl,user_data_loadgen.sh.tftpl}
-                    terraform.tfvars.example
-  infra/packer/     streamlite.pkr.hcl provision.sh
+  scripts/  doctor.sh calibrate.py create_issues.sh
+  infra/            ONE flat folder for all of Phase 2 (Terraform root + Packer + scripts):
+                    versions.tf variables.tf network.tf iam.tf ssm.tf alb.tf asg.tf site.tf cloudfront.tf
+                    loadgen.tf budgets.tf outputs.tf hsl.tftest.hcl .terraform.lock.hcl
+                    user_data_{baked,naive,loadgen}.sh.tftpl streamlite.pkr.hcl provision.sh
+                    smoke.sh reset_asg.sh terraform.tfvars.example backend.hcl.example README.md
   loadtest/k6/      lib.js step.js fixed.js spike.js
   automation/       asg_mode.py monitor_asg.py proactive_scaler.py collect_cw.py common.py
                     run_experiment.sh run_campaign.sh
@@ -518,6 +518,11 @@ Build context is the repo root: `docker build -f app/Dockerfile -t streamlite .`
 
 ## 5. Phase 2 — Infrastructure and the live URL
 
+> **As built (15 Nov 2026):** every Phase 2 file is in the single flat folder `infra/` (see `infra/README.md`).
+> Differences from the snippets below: AWS provider `~> 6.0`; CloudFront managed policies referenced by their
+> fixed IDs instead of data lookups; Packer takes `image` + `tag` instead of `org` + `tag`; `smoke.sh` and
+> `reset_asg.sh` (stopgap until `asg_mode.py reset`) live in `infra/`; offline tests in `infra/hsl.tftest.hcl`.
+
 ### 5.1 Topology
 
 ```
@@ -620,7 +625,7 @@ resource "aws_launch_template" "app" {
   metadata_options { http_endpoint = "enabled" http_tokens = "required" http_put_response_hop_limit = 2 }   # F16
   monitoring { enabled = true }
   credit_specification { cpu_credits = "standard" }    # only matters if you fall back to t3
-  user_data = base64encode(templatefile("${path.module}/templates/user_data_${var.user_data_mode}.sh.tftpl", {
+  user_data = base64encode(templatefile("${path.module}/user_data_${var.user_data_mode}.sh.tftpl", {
     image = var.image, work_scale = var.work_scale, region = var.region }))
   tag_specifications { resource_type = "instance" tags = { Name = "hsl-app", project = "hotstar-scale-lab" } }
 }
@@ -644,7 +649,7 @@ resource "aws_autoscaling_group" "app" {
 # NO aws_autoscaling_policy here. Modes are applied by automation/asg_mode.py.
 ```
 
-**`templates/user_data_baked.sh.tftpl`** (F9, F10)
+**`infra/user_data_baked.sh.tftpl`** (F9, F10)
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -655,7 +660,7 @@ WEB_CONCURRENCY=1
 EOF
 systemctl enable --now streamlite
 ```
-**`templates/user_data_naive.sh.tftpl`**: `dnf install -y docker && systemctl enable --now docker && docker pull ${image}`, write the same env file, then `docker run -d --restart always --network host --env-file /etc/streamlite.env ${image}`. Log `date +%s.%N` at the start and end of each step to `/var/log/hsl-boot.log`. E5 reads it through `aws ssm send-command` for the time breakdown.
+**`infra/user_data_naive.sh.tftpl`**: `dnf install -y docker && systemctl enable --now docker && docker pull ${image}`, write the same env file, then `docker run -d --restart always --network host --env-file /etc/streamlite.env ${image}`. Log `date +%s.%N` at the start and end of each step to `/var/log/hsl-boot.log`. E5 reads it through `aws ssm send-command` for the time breakdown.
 
 **`site.tf`** (F6): private S3 bucket `hsl-site-<suffix>`, public access fully blocked, `aws_cloudfront_origin_access_control` (s3, sigv4, always). The bucket policy allows `s3:GetObject` for principal `cloudfront.amazonaws.com` with condition `AWS:SourceArn = aws_cloudfront_distribution.main.arn`.
 
@@ -697,7 +702,7 @@ resource "aws_cloudfront_distribution" "main" {
 
 ### 5.3 Packer (T2.3)
 
-`infra/packer/streamlite.pkr.hcl`:
+`infra/streamlite.pkr.hcl`:
 ```hcl
 packer { required_plugins { amazon = { source = "github.com/hashicorp/amazon", version = ">= 1.3.0" } } }
 variable "org" {}  variable "tag" {}  variable "region" { default = "ap-south-1" }
@@ -714,7 +719,7 @@ build { sources = ["source.amazon-ebs.al2023"]
   provisioner "shell" { script = "provision.sh" environment_vars = ["ORG=${var.org}", "TAG=${var.tag}"] execute_command = "sudo -E bash '{{.Path}}'" }
   post-processor "manifest" { output = "manifest.json" } }
 ```
-`provision.sh` = PDF Appendix A with two changes: **do not** `systemctl enable streamlite` (F9), and add `EnvironmentFile=-/etc/streamlite.env` (the `-` makes the file optional). Also `dnf clean all`. `make ami` runs `packer init && packer build -var org=… -var tag=$(git rev-parse --short HEAD)`, extracts the AMI ID from `manifest.json` with `jq`, and writes it to `infra/terraform/ami.auto.tfvars` (git-ignored).
+`provision.sh` = PDF Appendix A with two changes: **do not** `systemctl enable streamlite` (F9), and add `EnvironmentFile=-/etc/streamlite.env` (the `-` makes the file optional). Also `dnf clean all`. `make ami` runs `packer init && packer build -var org=… -var tag=$(git rev-parse --short HEAD)`, extracts the AMI ID from `manifest.json` with `jq`, and writes it to `infra/ami.auto.tfvars` (git-ignored).
 
 Fallback if Packer fails: launch one AL2023 instance, SSM in, run `provision.sh`, then `aws ec2 create-image --instance-id … --name hsl-streamlite-manual-<sha>`. Document it in the runbook.
 
@@ -725,9 +730,9 @@ make tf-init                          # backend config from .backend.hcl
 make ami                              # → ami.auto.tfvars
 make tf-apply                         # ALB, ASG(1), CloudFront, site, SSM, budget
 make publish-site                     # aws s3 sync web/ s3://$SITE --delete && invalidation /*
-make smoke                            # scripts/smoke.sh
+make smoke                            # infra/smoke.sh
 ```
-`scripts/smoke.sh`:
+`infra/smoke.sh`:
 1. `curl -sf https://$CF/` contains `<title>`.
 2. `curl -sf https://$CF/api/v1/whoami | jq -e .instance_id`.
 3. `curl -s -o /dev/null -w '%{http_code}' https://$CF/internal/stats` → **404** (F2).
@@ -926,7 +931,7 @@ Steps (with `set -euo pipefail` and `trap cleanup EXIT INT TERM`, so a crash or 
 ```bash
 make lab-up                    # terraform apply -var enable_loadgen=true
 make push-harness
-aws ssm start-session --target $(terraform -chdir=infra/terraform output -raw loadgen_instance_id)
+aws ssm start-session --target $(terraform -chdir=infra output -raw loadgen_instance_id)
 # on loadgen:
 sudo su - ec2-user; tmux new -s lab; make pull-harness; source .env.tf
 python3 automation/asg_mode.py reset
@@ -1189,11 +1194,11 @@ Everyone rehearses the cheat-sheet in PDF §7.3, plus: *"Why not AWS predictive 
 | `test` / `lint` | `pytest app/tests automation/tests` / `ruff check . && ruff format --check . && terraform fmt -check -recursive infra` |
 | `image` | `docker build -f app/Dockerfile --build-arg GIT_SHA=$(SHA) -t streamlite:$(SHA) .` |
 | `calibrate` | runs `scripts/calibrate.py` in the container |
-| `tf-init` / `tf-plan` / `tf-apply` | terraform in `infra/terraform`, `-backend-config=.backend.hcl` |
+| `tf-init` / `tf-plan` / `tf-apply` | terraform in `infra/`, `-backend-config=.backend.hcl` |
 | `ami` | Packer build → `ami.auto.tfvars` |
 | `env` | terraform outputs → `.env.tf` |
 | `publish-site` | `s3 sync web/` + CloudFront invalidation |
-| `smoke` | `scripts/smoke.sh` |
+| `smoke` | `infra/smoke.sh` |
 | `lab-up` | `tf-apply` with `enable_loadgen=true` |
 | `destroy-lab` | `asg_mode.py reset --no-wait` + `tf-apply enable_loadgen=false`; prints remaining EC2 count |
 | `push-harness` / `pull-harness` | §6.8 |
@@ -1211,7 +1216,7 @@ Everyone rehearses the cheat-sheet in PDF §7.3, plus: *"Why not AWS predictive 
 - `terraform`: `terraform fmt -check -recursive` → `terraform init -backend=false` → `terraform validate`.
 - `packer`: `packer fmt -check` + `packer init` + `packer validate -syntax-only`.
 - `k6`: `docker run --rm -v $PWD/loadtest:/s grafana/k6 inspect /s/k6/spike.js` (catches JS errors).
-- `shell`: `shellcheck automation/*.sh scripts/*.sh infra/packer/provision.sh`.
+- `shell`: `shellcheck automation/*.sh scripts/*.sh infra/*.sh`.
 - `secrets`: GitHub secret scanning + push protection on (repo settings); also `gitleaks` action.
 
 **`.github/workflows/docker.yml`** (push to main touching `app/**` or `web/**`): `permissions: packages: write, contents: read` → `docker/login-action` with `GITHUB_TOKEN` → `docker/build-push-action` tags `ghcr.io/${{ github.repository_owner }}/streamlite:${{ github.sha short }}` and `:latest`. After the first push, set the package visibility to **public** (once, in GitHub UI) so instances pull without credentials.

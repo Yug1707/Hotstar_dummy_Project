@@ -8,7 +8,7 @@ We deploy a small web app (**StreamLite**, FastAPI) behind an AWS Application Lo
 Scaling Group, serve it on a public HTTPS URL through CloudFront, then use k6 to replay a match-day traffic
 spike under different scaling strategies and measure latency, errors, scaling behaviour and cost.
 
-- Live URL: _coming in Phase 2 (`v0.2`)_
+- Live URL: _after the first deploy (`make tf-apply`, see [`infra/README.md`](infra/README.md)), tag `v0.2`_
 - Plans: [`docs/IMPLEMENTATION_PLAN_DETAILED.md`](docs/IMPLEMENTATION_PLAN_DETAILED.md) ·
   [`docs/TEAM_PLAN_3_PEOPLE.md`](docs/TEAM_PLAN_3_PEOPLE.md) · [original plan (PDF)](docs/original-plan.pdf)
 - Progress log: [`docs/progress.md`](docs/progress.md)
@@ -19,7 +19,7 @@ spike under different scaling strategies and measure latency, errors, scaling be
 |---|---|---|
 | 0 | Repo, tooling check, sources log, backlog | done |
 | 1 | StreamLite app, tests, container, CI | done (`v0.1`) |
-| 2 | Terraform + Packer + CloudFront live URL | next |
+| 2 | Terraform + Packer + CloudFront live URL | code done, validated offline; first deploy pending (AWS) |
 | 3 | k6 harness, ASG mode switcher, proactive scaler | – |
 | 4–7 | Experiments, analysis, dashboard, report | – |
 
@@ -32,7 +32,10 @@ make test            # pytest
 make dev             # http://localhost:8000  (reload on change)
 make image           # docker build -f app/Dockerfile -t streamlite:<sha> .
 make run-image       # run the container on :8000
+make tf-test         # Terraform tests against mock AWS (no account needed)
 ```
+
+Deploying to AWS: [`infra/README.md`](infra/README.md).
 
 Try it:
 
@@ -64,7 +67,7 @@ app/        StreamLite (FastAPI) + tests + Dockerfile
 web/        static dashboard (Phase 6)
 scripts/    doctor.sh, calibrate.py, create_issues.sh
 make/       per-owner Makefile fragments (infra.mk, app.mk, lab.mk, analysis.mk)
-infra/      terraform/ and packer/ (Phase 2)
+infra/      Phase 2 in one folder: Terraform, Packer, boot scripts, smoke test
 loadtest/   k6 scripts (Phase 3)
 automation/ asg_mode, monitor, proactive scaler, runner (Phase 3)
 analysis/   parser, plots, cost model (Phase 5)

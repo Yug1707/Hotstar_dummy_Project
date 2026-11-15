@@ -1,0 +1,54 @@
+#!/bin/bash
+# Load generator bootstrap: k6 (pinned), Python 3.11 + boto3/pyyaml, kernel and fd limits,
+# and /etc/profile.d/hsl.sh with the stack's names so the harness needs no Terraform.
+set -euo pipefail
+
+dnf install -y jq tar gzip python3.11 python3.11-pip
+python3.11 -m pip install --quiet boto3 pyyaml
+
+K6=k6-v${k6_version}-linux-amd64
+curl -fsSL "https://github.com/grafana/k6/releases/download/v${k6_version}/$K6.tar.gz" | tar -xz -C /tmp
+install -m 0755 "/tmp/$K6/k6" /usr/local/bin/k6
+rm -rf "/tmp/$K6"
+
+# Many short-lived connections at ~400+ rps: widen the ephemeral port range, raise fd limits.
+cat >/etc/sysctl.d/99-hsl.conf <<'EOF'
+net.ipv4.ip_local_port_range = 1024 65535
+net.ipv4.tcp_tw_reuse = 1
+net.core.somaxconn = 4096
+EOF
+sysctl --system >/dev/null
+
+cat >/etc/security/limits.d/99-hsl.conf <<'EOF'
+*    soft nofile 1048576
+*    hard nofile 1048576
+root soft nofile 1048576
+root hard nofile 1048576
+EOF
+# SSM sessions are children of the agent, not of a PAM login, so raise its limit too.
+mkdir -p /etc/systemd/system/amazon-ssm-agent.service.d
+cat >/etc/systemd/system/amazon-ssm-agent.service.d/limits.conf <<'EOF'
+[Service]
+LimitNOFILE=1048576
+EOF
+systemctl daemon-reload
+systemctl restart amazon-ssm-agent
+
+cat >/etc/profile.d/hsl.sh <<'EOF'
+export AWS_REGION=${region}
+export AWS_DEFAULT_REGION=${region}
+export RESULTS_BUCKET=${results_bucket}
+export ASG_NAME=${asg_name}
+export TG_ARN=${tg_arn}
+export TG_ARN_SUFFIX=${tg_arn_suffix}
+export ALB_ARN_SUFFIX=${alb_arn_suffix}
+export ALB_DNS=${alb_dns}
+export CLOUDFRONT_URL=${cloudfront_url}
+export PYTHON=python3.11
+export K6_CSV_TIME_FORMAT=unix_milli
+ulimit -n 1048576 2>/dev/null || true
+EOF
+
+mkdir -p /opt/hsl
+chmod 0777 /opt/hsl # harness tarball is unpacked here by `make pull-harness`
+echo "loadgen ready $(date -u +%FT%TZ) k6=$(/usr/local/bin/k6 version | head -1)" >/var/log/hsl-loadgen-ready.log

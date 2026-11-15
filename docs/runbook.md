@@ -16,7 +16,13 @@ make image && make run-image
 ```
 
 ## Deploy / teardown
-_Phase 2 (A)._
+See [`infra/README.md`](../infra/README.md): one-time setup, first deploy, lab session, teardown, Packer fallback.
+
+| Item | Value |
+|---|---|
+| CloudFront URL | _tbd (after first deploy)_ |
+| Current AMI / image tag | _tbd_ |
+| `work_scale` (T2.7) | _tbd_ |
 
 ## Lab session checklist
 See docs/IMPLEMENTATION_PLAN_DETAILED.md §15.3.

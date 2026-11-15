@@ -31,7 +31,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: shellcheck
-        run: shellcheck scripts/*.sh
+        run: shellcheck scripts/*.sh infra/*.sh
+
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.17.2"
+      - run: terraform fmt -check -diff
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+      - name: terraform test (mock providers, no AWS)
+        run: terraform test
+
+  packer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-packer@v3
+        with:
+          version: "1.16.2"
+      - run: packer fmt -check -diff infra/streamlite.pkr.hcl
+      - run: packer init infra/streamlite.pkr.hcl
+      - run: packer validate -syntax-only infra/streamlite.pkr.hcl
 
   docker:
     runs-on: ubuntu-latest

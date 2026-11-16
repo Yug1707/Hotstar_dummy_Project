@@ -10,9 +10,10 @@ harness caught (invalid runs, saturated load generator, scaling-policy leftovers
 | Threat | Effect | Mitigation or statement |
 |---|---|---|
 | Load generator in the same region | latency and CDN behaviour are kinder than reality | stated; comparisons are relative |
-| Tiny scale (1 to 6 instances) | shape, not magnitude | extrapolation labelled as arithmetic |
+| Tiny scale (1 to 4 instances, AWS Free plan) | shape, not magnitude | extrapolation labelled as arithmetic |
 | Synthetic CPU model | real paths have databases, caches and licences | classes with fixed CPU cost; calibrated once |
 | Round-robin ALB | no least-outstanding-requests balancing | stated; E2b measures the efficiency it causes |
+| `c7i-flex` runs at full speed only "most of the time" | a slower instance looks like a lower C1 | E1 measures C1 on the same type; three runs per point |
 | CloudWatch one-minute granularity | reactive timing is coarse | the monitor samples the ASG every 2 s |
 | Three runs per arm | median and range, not a confidence interval | quoted as such, never the best run |
 | One instance type | no diversification, no Spot behaviour | Spot enters only through the cost model |

@@ -4,7 +4,7 @@ owner        = "it457-team"
 alert_emails = ["member-a@example.com", "member-b@example.com", "member-c@example.com"]
 budget_usd   = 25
 
-# From the c6i.large calibration (T2.7). Changing it rolls the fleet (instance refresh).
+# From the c7i-flex.large calibration (T2.7). Changing it rolls the fleet (instance refresh).
 work_scale      = "2.0"
 web_concurrency = 1
 

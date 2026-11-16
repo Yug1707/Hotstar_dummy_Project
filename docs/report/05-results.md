@@ -1,14 +1,14 @@
 # 5 Results
 
 Numbers are *median (min to max of N runs)* from `results/<EXP>/run*/summary.json`. Every `TODO(EX)` marks a measurement that
-does not exist yet; nothing here is estimated. All runs: `c6i.large`, same AMI, `WORK_SCALE` and harness SHA (see `meta.json`),
+does not exist yet; nothing here is estimated. All runs: `c7i-flex.large`, same AMI, `WORK_SCALE` and harness SHA (see `meta.json`),
 C1 = `TODO(E1)` rps.
 
 ## 5.1 E1 and E2: capacity and latency against instance count (H1)
 
 **Hypothesis.** Capacity grows roughly linearly with N; at a fixed load latency is a hockey stick.
 
-**Setup.** E1: step profile on one instance, three runs, to find the knee (C1). E2a: fixed 2 x C1 for N = 1 to 5, three runs each,
+**Setup.** E1: step profile on one instance, three runs, to find the knee (C1). E2a: fixed 2 x C1 for N = 1 to 4, three runs each,
 alternating the order of N to cancel drift. E2b: step profile for each N, one run each, to find capacity(N).
 
 **Result.** Figure F1 (`results/figures/F1.png`). C1 = `TODO(E1)` rps (range `TODO(E1)`). At 2 x C1, critical p95 is `TODO(E2a)` ms
@@ -41,7 +41,7 @@ extra instance-minutes buy. State the price of safety explicitly.
 
 **Hypothesis.** A baked AMI makes capacity useful much sooner than installing Docker and pulling the image at boot.
 
-**Setup.** No load. Scale 1 to 5 with the monitor at 2 s, three runs per AMI mode; for the naive mode the `hsl-boot.log` breakdown
+**Setup.** No load. Scale 1 to 4 with the monitor at 2 s, three runs per AMI mode; for the naive mode the `hsl-boot.log` breakdown
 (Docker install, image pull, container start).
 
 **Result.** Figure F4. Launch to first healthy target: baked `TODO(E5)` s, naive `TODO(E5)` s; the naive breakdown is `TODO(E5)`.

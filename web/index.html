@@ -47,7 +47,7 @@
       <table>
         <thead><tr><th></th><th>Hotstar 2019</th><th>Hotstar 2023</th><th>This lab</th></tr></thead>
         <tbody>
-          <tr><th>Compute</th><td>EC2 + Auto Scaling</td><td>EKS (Kubernetes)</td><td>EC2 Auto Scaling Group, 1 to 6 × c6i.large</td></tr>
+          <tr><th>Compute</th><td>EC2 + Auto Scaling</td><td>EKS (Kubernetes)</td><td>EC2 Auto Scaling Group, 1 to 4 × c7i-flex.large (AWS Free plan)</td></tr>
           <tr><th>Front door</th><td>ALBs + CDN</td><td>Envoy, split CDN domains</td><td>CloudFront + one ALB</td></tr>
           <tr><th>Scaling</th><td>Pre-warm + custom request-rate scaler</td><td>Cluster-level, datacentre abstraction</td><td>Static, reactive, proactive (scripted)</td></tr>
           <tr><th>Under overload</th><td>Switch off non-critical features</td><td>Same idea</td><td>Degrade level (SSM) and auto-shed</td></tr>

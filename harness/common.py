@@ -19,7 +19,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-MAX_CAP = 6  # hard cap, also enforced by Terraform's asg_max validation (F1)
+MAX_CAP = 4  # hard cap (Free plan: credit + vCPU quota), also Terraform's asg_max validation (F1)
 HERE = Path(__file__).resolve().parent
 STATE_DIR = Path(os.environ.get("HSL_STATE_DIR", Path.home() / ".hsl"))
 RESET_STAMP = STATE_DIR / "last_reset"

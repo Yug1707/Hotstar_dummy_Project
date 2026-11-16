@@ -16,6 +16,31 @@ data "aws_subnets" "default" {
   }
 }
 
+# Not every AZ offers every instance type. The ASG and the loadgen use only the default subnets in AZs
+# that offer both instance types; the ALB keeps all default subnets (it routes across zones).
+data "aws_ec2_instance_type_offerings" "compute" {
+  location_type = "availability-zone"
+  filter {
+    name   = "instance-type"
+    values = [var.instance_type]
+  }
+}
+
+data "aws_subnets" "compute" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+  filter {
+    name   = "default-for-az"
+    values = ["true"]
+  }
+  filter {
+    name   = "availability-zone"
+    values = data.aws_ec2_instance_type_offerings.compute.locations
+  }
+}
+
 resource "aws_security_group" "alb" {
   name        = "${local.name}-alb-sg"
   description = "ALB: HTTP from anywhere (CloudFront and loadgen)"

@@ -67,9 +67,10 @@ def key_numbers(d: make_plots.Data, cost: dict | None) -> list[dict]:
 
 def captions(d: make_plots.Data, c1: float, runs: dict[str, dict]) -> dict[str, str]:
     n = lambda fid: runs.get(fid, {}).get("runs", "?")  # noqa: E731
+    itype = common.global_cfg()["instance_type"]
     cap = {
         "F1": f"F1: Critical latency vs instance count at a fixed 2 x C1 load, and capacity vs N. "
-        f"The knee sits between one and two instances. N = {n('F1')} runs, C1 = {c1:g} rps, c6i.large.",
+        f"The knee sits between one and two instances. N = {n('F1')} runs, C1 = {c1:g} rps, {itype}.",
         "F2": f"F2: Match-day spike, reactive vs proactive. Reactive capacity arrives late; "
         f"proactive stays inside the SLO. N = {n('F2')} runs, median run shown.",
         "F3": "F3: SLO-violation seconds and critical error rate per scaling strategy. Pre-warming removes them.",
@@ -145,7 +146,7 @@ def build(results: Path, prefix: str, model_path: Path, prices_path: Path, figur
         ],  # fmt: skip
         "series": series(d, c1),
         "cost": {
-            "price_c6i_large": price,
+            "price_per_instance_h": price,  # on-demand USD/h of instance_type
             "spot_discount_pct": cost["spot_discount_pct"],
             "viewers_per_instance": cost["assumptions"]["viewers_per_instance"],
             "viewers_per_rps": model["viewers_per_rps"],

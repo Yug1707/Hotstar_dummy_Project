@@ -18,7 +18,7 @@
 #   --local URL         laptop dry run against URL (e.g. http://127.0.0.1:8000): no AWS at all
 # examples:
 #   run_experiment.sh E3 1 reactive spike
-#   run_experiment.sh E4c 2 "proactive --prewarm 4" spike
+#   run_experiment.sh E4c 2 "proactive --prewarm 3" spike
 #   run_experiment.sh E2a_N3 1 "static 3" fixed FIXED_RPS=200
 #   run_experiment.sh DRY 1 reactive spike C1=10                      (acceptance dry run, T3.7)
 #   run_experiment.sh --local http://127.0.0.1:8000 LOCAL 1 none spike C1=10 SPEED=10
@@ -102,7 +102,7 @@ esac
 if [ "$LOCAL" = 0 ]; then
   load_stack_env
   : "${ASG_NAME:?missing ASG_NAME (source /etc/profile.d/hsl.sh or make env)}" "${TG_ARN:?}" "${RESULTS_BUCKET:?}"
-  if [ "$TARGET" = cloudfront ]; then BASE=${CLOUDFRONT_URL:?}; else BASE="http://${ALB_DNS:?}"; fi
+  if [ "$TARGET" = cloudfront ]; then BASE=${CLOUDFRONT_URL:?CloudFront is not enabled yet (account not verified): only --target alb works}; else BASE="http://${ALB_DNS:?}"; fi
 else
   BASE=$LOCAL_URL
 fi

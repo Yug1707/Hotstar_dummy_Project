@@ -166,7 +166,8 @@ def f1(d: Data, c1: float, slo: dict, out: Path) -> dict | None:
     b.set_title("B. Scaling efficiency")
     b.legend(loc="upper left", frameon=False)
     runs = max(len(d.get(f"E2a_N{n}")) for n in ns)
-    footer(fig, f"Median with min-max whisker, N = {runs} runs per point; C1 = {c1:g} rps (E1); c6i.large.")
+    itype = common.global_cfg()["instance_type"]
+    footer(fig, f"Median with min-max whisker, N = {runs} runs per point; C1 = {c1:g} rps (E1); {itype}.")
     save(fig, out, "F1")
     return {"runs": runs}
 
@@ -259,7 +260,7 @@ def f4(d: Data, out: Path) -> dict | None:
     ax.set_xlabel("seconds after launch (grey: launch to InService; colour: InService to first healthy)")
     ax.grid(False, axis="y")
     ax.set_title("Each bar is one new instance")
-    footer(fig, f"E5: scale 1 to 5, {len(d.get('E5_baked'))} runs per AMI mode, monitor at 2 s.")
+    footer(fig, f"E5: scale 1 to 4, {len(d.get('E5_baked'))} runs per AMI mode, monitor at 2 s.")
     save(fig, out, "F4")
     return {"runs": len(d.get("E5_baked"))}
 

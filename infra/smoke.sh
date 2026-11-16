@@ -18,22 +18,33 @@ fail=0
 ok() { echo "PASS  $*"; pass=$((pass + 1)); }
 bad() { echo "FAIL  $*"; fail=$((fail + 1)); }
 
-echo "CloudFront: $CLOUDFRONT_URL"
+CF=1
+[ -n "${CLOUDFRONT_ID:-}" ] || CF=0 # enable_cloudfront = false: account not verified for CloudFront yet
+skip() { echo "SKIP  $*"; }
+if [ "$CF" = 1 ]; then echo "CloudFront: $CLOUDFRONT_URL"; else echo "CloudFront: not enabled yet (check 4 skipped, check 1 via the ALB)"; fi
 echo "ALB:        http://$ALB_DNS"
 echo
 
-# 1. dashboard from S3 through CloudFront
-if curl -sf --max-time 10 "$CLOUDFRONT_URL/" | grep -q "<title>"; then
+# 1. dashboard: from S3 through CloudFront, or (no CloudFront yet) the copy of web/ inside the image, via the ALB
+if [ "$CF" = 0 ]; then
+  if curl -sf --max-time 10 "http://$ALB_DNS/" | grep -q "<title>"; then
+    ok "1 site: GET / returns the dashboard (served by the app, no CloudFront yet)"
+  else
+    bad "1 site: GET / via the ALB (image without web/?)"
+  fi
+elif curl -sf --max-time 10 "$CLOUDFRONT_URL/" | grep -q "<title>"; then
   ok "1 site: GET / returns the dashboard"
 else
   bad "1 site: GET / (run 'make publish-site'?)"
 fi
 
-# 2. API through CloudFront -> ALB -> instance
+# 2. API through CloudFront (or the ALB alone) -> instance
+via=CloudFront
+[ "$CF" = 1 ] || via=ALB
 if id=$(curl -sf --max-time 10 "$CLOUDFRONT_URL/api/v1/whoami" | jq -er .instance_id); then
-  ok "2 api: whoami via CloudFront -> $id"
+  ok "2 api: whoami via $via -> $id"
 else
-  bad "2 api: whoami via CloudFront"
+  bad "2 api: whoami via $via"
 fi
 
 # 3. /internal/* is blocked at the ALB (F2), both via CloudFront and directly
@@ -46,12 +57,16 @@ else
 fi
 
 # 4. match state is cached at the edge (E7 precondition)
-curl -s -o /dev/null --max-time 10 "$CLOUDFRONT_URL/api/v1/match/state"
-xcache=$(curl -sI --max-time 10 "$CLOUDFRONT_URL/api/v1/match/state" | tr -d '\r' | awk -F': ' 'tolower($1)=="x-cache"{print $2}')
-if [[ "$xcache" == Hit* ]]; then
-  ok "4 cdn: second GET /api/v1/match/state -> $xcache"
+if [ "$CF" = 0 ]; then
+  skip "4 cdn: needs CloudFront"
 else
-  bad "4 cdn: x-cache='$xcache', expected 'Hit from cloudfront'"
+  curl -s -o /dev/null --max-time 10 "$CLOUDFRONT_URL/api/v1/match/state"
+  xcache=$(curl -sI --max-time 10 "$CLOUDFRONT_URL/api/v1/match/state" | tr -d '\r' | awk -F': ' 'tolower($1)=="x-cache"{print $2}')
+  if [[ "$xcache" == Hit* ]]; then
+    ok "4 cdn: second GET /api/v1/match/state -> $xcache"
+  else
+    bad "4 cdn: x-cache='$xcache', expected 'Hit from cloudfront'"
+  fi
 fi
 
 # 5. (optional, costs ~2 instance-minutes) the ALB spreads requests across instances and AZs

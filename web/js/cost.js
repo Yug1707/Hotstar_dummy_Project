@@ -5,7 +5,7 @@
 // No price is hard-coded: with a null price the calculator shows instance counts only.
 "use strict";
 (() => {
-  const FALLBACK = { c1: 100, cost: { price_c6i_large: null, spot_discount_pct: null, planning_utilisation: 0.8, viewers_per_rps: 25, match_hours: 4 } };
+  const FALLBACK = { c1: 100, cost: { price_per_instance_h: null, spot_discount_pct: null, planning_utilisation: 0.8, viewers_per_rps: 25, match_hours: 4 } };
   const MIN = 1e6, MAX = 6e7; // slider is logarithmic between 1 M and 60 M
 
   const viewersFrom = (pos) => Math.round(MIN * Math.pow(MAX / MIN, pos / 100) / 1e5) * 1e5;
@@ -19,7 +19,7 @@
   async function init() {
     const raw = (await loadRaw()) || FALLBACK;
     const c = raw.cost || FALLBACK.cost, c1 = raw.c1 || FALLBACK.c1;
-    const util = c.planning_utilisation, hours = c.match_hours, price = c.price_c6i_large, disc = c.spot_discount_pct;
+    const util = c.planning_utilisation, hours = c.match_hours, price = c.price_per_instance_h, disc = c.spot_discount_pct;
     const vIn = $("#cc-viewers"), pIn = $("#cc-vpr"), sIn = $("#cc-spot");
     pIn.value = c.viewers_per_rps;
 

@@ -30,6 +30,8 @@ resource "aws_cloudfront_origin_access_control" "site" {
 }
 
 data "aws_iam_policy_document" "site" {
+  count = var.enable_cloudfront ? 1 : 0
+
   statement {
     sid       = "CloudFrontReadOnly"
     actions   = ["s3:GetObject"]
@@ -43,13 +45,19 @@ data "aws_iam_policy_document" "site" {
     condition {
       test     = "StringEquals"
       variable = "AWS:SourceArn"
-      values   = [aws_cloudfront_distribution.main.arn]
+      values   = [aws_cloudfront_distribution.main[0].arn]
     }
   }
 }
 
 resource "aws_s3_bucket_policy" "site" {
+  count      = var.enable_cloudfront ? 1 : 0
   bucket     = aws_s3_bucket.site.id
-  policy     = data.aws_iam_policy_document.site.json
+  policy     = data.aws_iam_policy_document.site[0].json
   depends_on = [aws_s3_bucket_public_access_block.site]
+}
+
+moved {
+  from = aws_s3_bucket_policy.site
+  to   = aws_s3_bucket_policy.site[0]
 }

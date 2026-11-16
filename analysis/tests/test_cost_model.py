@@ -4,6 +4,9 @@ import pytest
 
 from analysis import common, cost_model, fake_campaign, parse_k6
 
+# the lab instance type from harness/experiments.yaml, so the fake campaign and the prices agree
+ITYPE = common.global_cfg()["instance_type"]
+
 MODEL = {
     "viewers_per_rps": 25,
     "planning_utilisation": 0.8,
@@ -11,11 +14,11 @@ MODEL = {
     "match_hours": 4,
     "spot_shares": [0.0, 0.5],
     "sensitivity_viewers_per_rps": [10, 25],
-    "vcpus_per_instance": {"c6i.large": 2},
+    "vcpus_per_instance": {ITYPE: 2},
     "hulk": {"vcpus": 1000, "test_hours": 1},
 }
 # test-only numbers, not AWS prices
-PRICES = {"ec2_on_demand_usd_per_h": {"c6i.large": 0.10}, "spot_discount_pct": {"c6i.large": 60}}
+PRICES = {"ec2_on_demand_usd_per_h": {ITYPE: 0.10}, "spot_discount_pct": {ITYPE: 60}}
 
 
 def test_formulas():
@@ -27,7 +30,7 @@ def test_formulas():
 
 
 def test_compute_with_prices():
-    r = cost_model.compute(100, "c6i.large", MODEL, PRICES, [])
+    r = cost_model.compute(100, ITYPE, MODEL, PRICES, [])
     assert r["peaks"]["b"]["instances"] == 29_500
     assert r["peaks"]["b"]["always_on_24h_usd"] == pytest.approx(29_500 * 24 * 0.10)
     assert r["peaks"]["b"]["spot"]["0.5"] == pytest.approx(29_500 * 4 * 0.10 * 0.7)
@@ -38,7 +41,7 @@ def test_compute_with_prices():
 
 
 def test_missing_price_keeps_instance_counts():
-    r = cost_model.compute(100, "c6i.large", MODEL, {}, [])
+    r = cost_model.compute(100, ITYPE, MODEL, {}, [])
     assert r["peaks"]["b"]["instances"] == 29_500
     assert r["peaks"]["b"]["always_on_24h_usd"] is None
     assert r["hulk"]["cost_usd"] is None

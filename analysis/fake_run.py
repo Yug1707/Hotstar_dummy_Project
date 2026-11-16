@@ -178,7 +178,7 @@ def make_run(
     meta = {"exp": exp, "run": run, "valid": True, "mode": f"static {n_static}" if mode == "static" else mode,
             "profile": profile["name"], "target": "alb", "k6_start_ts": START_TS,
             "k6_end_ts": START_TS + profile["total_s"], "k6_start_utc": "2027-01-15T08:00:00Z",
-            "k6_end_utc": "2027-01-15T08:12:30Z", "c1": c1, "work_scale": 2.0, "instance_type": "c6i.large",
+            "k6_end_utc": "2027-01-15T08:12:30Z", "c1": c1, "work_scale": 2.0, "instance_type": "c7i-flex.large",
             "ami_id": "ami-fake", "app_version": "fake", "harness_sha": "fake", "region": "local", "local": True,
             "speed": 1, "events_s": profile.get("events_s"), "steps": profile.get("steps"),
             "profile_total_s": profile["total_s"],

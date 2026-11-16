@@ -2,7 +2,7 @@
  "generated_utc": "2026-11-16T04:39:20Z",
  "pending": true,
  "c1": 100.0,
- "instance_type": "c6i.large",
+ "instance_type": "c7i-flex.large",
  "slo": {
   "critical_p95_ms": 300,
   "error_rate": 0.01
@@ -11,7 +11,7 @@
  "figures": [],
  "series": {},
  "cost": {
-  "price_c6i_large": null,
+  "price_per_instance_h": null,
   "spot_discount_pct": null,
   "viewers_per_instance": 2000.0,
   "viewers_per_rps": 25,

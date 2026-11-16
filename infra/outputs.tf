@@ -1,11 +1,16 @@
 # `make env` writes these to .env.tf (git-ignored) as UPPER_CASE=value for scripts to source.
 
 output "cloudfront_url" {
-  value = "https://${aws_cloudfront_distribution.main.domain_name}"
+  description = "Public URL: CloudFront (HTTPS), or the ALB (HTTP) while enable_cloudfront = false"
+  value       = local.public_url
 }
 
 output "cloudfront_id" {
-  value = aws_cloudfront_distribution.main.id
+  value = try(aws_cloudfront_distribution.main[0].id, "")
+}
+
+output "cloudfront_enabled" {
+  value = var.enable_cloudfront
 }
 
 output "alb_dns" {
@@ -50,4 +55,12 @@ output "user_data_mode" {
 
 output "app_ami" {
   value = aws_launch_template.app.image_id
+}
+
+output "instance_type" {
+  value = var.instance_type
+}
+
+output "asg_max" {
+  value = var.asg_max
 }

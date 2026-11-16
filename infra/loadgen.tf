@@ -41,7 +41,7 @@ resource "aws_instance" "loadgen" {
 
   ami                         = nonsensitive(data.aws_ssm_parameter.al2023.value)
   instance_type               = var.loadgen_instance_type
-  subnet_id                   = sort(data.aws_subnets.default.ids)[0]
+  subnet_id                   = sort(data.aws_subnets.compute.ids)[0]
   vpc_security_group_ids      = [aws_security_group.loadgen.id]
   iam_instance_profile        = aws_iam_instance_profile.loadgen.name
   associate_public_ip_address = true
@@ -56,7 +56,7 @@ resource "aws_instance" "loadgen" {
     tg_arn_suffix  = aws_lb_target_group.app.arn_suffix
     alb_arn_suffix = aws_lb.app.arn_suffix
     alb_dns        = aws_lb.app.dns_name
-    cloudfront_url = "https://${aws_cloudfront_distribution.main.domain_name}"
+    cloudfront_url = var.enable_cloudfront ? local.public_url : "" # E7 --target cloudfront needs it
   })
   user_data_replace_on_change = true
 

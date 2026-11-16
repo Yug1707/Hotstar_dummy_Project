@@ -42,7 +42,7 @@ see [`results/README.md`](../results/README.md).
 
 ## Filling in the cost inputs
 `config/prices.yaml` is empty on purpose. After the first deploy, build one estimate in the AWS Pricing Calculator
-(region ap-south-1), copy the on-demand price of `c6i.large`, the ALB prices and the Spot discount observed in the
+(region ap-south-1), copy the on-demand price of `c7i-flex.large`, the ALB prices and the Spot discount observed in the
 Spot price history, and set `retrieved` and `source`. Until then `make analyze` and the dashboard show instance counts
 and say "price missing".
 

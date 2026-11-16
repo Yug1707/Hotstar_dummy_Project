@@ -5,20 +5,27 @@ and also holds the Packer template, the boot scripts and the deploy and teardown
 Owner: **A**. Only A runs `tf-apply`, `ami` and `destroy-*`; everyone else may run `tf-plan`
 and the offline checks.
 
+**AWS Free plan (USD 118 credit).** Free-plan accounts may only launch free-tier-eligible instance
+types; `c6i.large` fails with `InvalidParameterCombination: The specified instance type is not eligible
+for Free Tier`. Everything therefore runs on **c7i-flex.large** (2 vCPU, 4 GiB, x86_64, eligible), the
+fleet is capped at **4** app servers (8 vCPU + 2 for the loadgen), and the budget alarm tracks gross
+usage (`include_credit = false`), because the credit keeps the net bill at $0. `deploy_aws.sh` checks
+which types the account may launch and writes `instance.auto.tfvars`; `APP_TYPE=…` overrides it.
+
 ```
 CloudFront (HTTPS, PriceClass_200)
  ├─ default (*)       → S3 site bucket (private, OAC)      cached
  ├─ /api/v1/match/*   → ALB                                cached, max-age=5 from origin (E7)
  └─ /api/*            → ALB                                not cached, viewer headers forwarded
-ALB :80 ── rule 1: /internal/* → 404 ──► target group :8000 (/healthz) ──► ASG c6i.large × 1..6
-loadgen c6i.xlarge (lab sessions only) ── :8000 /internal/stats on private IPs ──► app instances
+ALB :80 ── rule 1: /internal/* → 404 ──► target group :8000 (/healthz) ──► ASG c7i-flex.large × 0..4
+loadgen c7i-flex.large (lab sessions only) ── :8000 /internal/stats on private IPs ──► app instances
 ```
 
 | File | What |
 |---|---|
 | `versions.tf` | Terraform ≥ 1.10, providers, S3 backend with lock file (F7), default tags |
-| `variables.tf` | all inputs; `asg_max ≤ 6` validation |
-| `network.tf` | default VPC/subnets; SGs `hsl-alb-sg`, `hsl-app-sg`, `hsl-loadgen-sg`; **no port 22** |
+| `variables.tf` | all inputs; `asg_max ≤ 4` validation, Free-plan instance types |
+| `network.tf` | default VPC/subnets (ASG + loadgen only in AZs that offer the instance type); SGs `hsl-alb-sg`, `hsl-app-sg`, `hsl-loadgen-sg`; **no port 22** |
 | `iam.tf` | app role (read `/streamlite/*`), loadgen role (drive the ASG, SSM params, results bucket) |
 | `ssm.tf` | `/streamlite/degrade_level` (TF ignores value changes), `/streamlite/loadtest_token` SecureString (F10) |
 | `alb.tf` | ALB, target group (round robin, `/healthz` every 5 s), listener, `/internal/*` → 404 (F2) |
@@ -72,7 +79,7 @@ GHCR package page and pass it, e.g. `make ami IMAGE_TAG=86c00d4`.
 ## Lab session (A starts it, C runs experiments)
 
 ```bash
-make lab-up              # same stack + loadgen (c6i.xlarge); refreshes .env.tf
+make lab-up              # same stack + loadgen (c7i-flex.large); refreshes .env.tf
 make loadgen-shell       # SSM shell; `source /etc/profile.d/hsl.sh` already exported
 ...                      # Phase 3: make push-harness / pull-harness / exp
 make destroy-lab         # reset ASG to 1, remove loadgen, list what is still running
@@ -93,19 +100,23 @@ Boot timings for E5 are in `/var/log/hsl-boot.log` on each instance (`<step> <ep
 
 ## Packer fallback (if `make ami` fails)
 
-Launch one AL2023 c6i.large with the `hsl-app-profile` instance profile, open an SSM shell, copy
+Launch one AL2023 c7i-flex.large with the `hsl-app-profile` instance profile, open an SSM shell, copy
 `provision.sh` over and run `sudo IMAGE=ghcr.io/<owner>/streamlite:<sha7> bash provision.sh`. Then run
 `aws ec2 create-image --instance-id <id> --name hsl-streamlite-manual-<sha7>`. Put the new id in
 `infra/ami.auto.tfvars` as `ami_id = "ami-…"` and terminate the instance.
 
 ## Teardown
 
-- After each session: `make destroy-lab`. The demo stack (ALB + CloudFront + 1 instance) keeps running,
-  at about $3–4 per day.
+- After each session: `make destroy-lab` (or `./deploy_aws.sh lab-down`). The demo stack (ALB +
+  CloudFront + 1 instance) keeps running, at about $3 of credit per day.
+- Not needed for a day or more: `./deploy_aws.sh pause` (ASG to 0, about $1 per day for the ALB and its
+  IPs); `./deploy_aws.sh resume` brings 1 server back in ~2 min.
 - After the viva: `make results-pull`, then `make destroy-all`. It asks you to type `destroy`, deletes
   the results bucket, deregisters every `hsl` AMI and deletes their snapshots. The state bucket is kept.
 
 ## Troubleshooting
 
 See plan §14. The most common problems: targets stay unhealthy (`systemctl status streamlite` over SSM),
-the GHCR package is still private (`make image-check`), or `VcpuLimitExceeded` (quota not granted yet).
+the GHCR package is still private (`make image-check`), or `VcpuLimitExceeded` (quota not granted yet), or `Your account must be verified before you can add new CloudFront resources` (AWS Support case; the
+stack runs with `enable_cloudfront = false` meanwhile), or `not eligible for Free Tier` (set `APP_TYPE` to an
+eligible type: `aws ec2 describe-instance-types --filters Name=free-tier-eligible,Values=true`).

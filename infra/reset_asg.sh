@@ -1,7 +1,7 @@
 #!/bin/bash
 # Put the ASG back to the idle demo state: no scaling policies, no scheduled actions,
-# min 1 / max 6 / desired 1. Used by `make destroy-lab` until automation/asg_mode.py (Phase 3)
-# provides `asg_mode.py reset`; afterwards both do the same thing.
+# min N / max ASG_MAX / desired N, with N = $1 (default 1). `reset_asg.sh 0` pauses the stack
+# (no app servers running; deploy_aws.sh pause). Same end state as `asg_mode.py reset` for N = 1.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 [ -f .env.tf ] || { echo "missing .env.tf: run 'make env' first" >&2; exit 2; }
@@ -11,6 +11,9 @@ source .env.tf
 set +a
 : "${ASG_NAME:?}" "${REGION:?}"
 export AWS_REGION="$REGION"
+N=${1:-1}
+MAX=${ASG_MAX:-4}
+[[ $N =~ ^[0-9]+$ ]] && [ "$N" -le "$MAX" ] || { echo "usage: reset_asg.sh [0..$MAX]" >&2; exit 2; }
 
 for p in $(aws autoscaling describe-policies --auto-scaling-group-name "$ASG_NAME" \
   --query 'ScalingPolicies[].PolicyName' --output text); do
@@ -25,5 +28,5 @@ for a in $(aws autoscaling describe-scheduled-actions --auto-scaling-group-name 
 done
 
 aws autoscaling update-auto-scaling-group --auto-scaling-group-name "$ASG_NAME" \
-  --min-size 1 --max-size 6 --desired-capacity 1
-echo "$ASG_NAME reset: min 1, max 6, desired 1"
+  --min-size "$N" --max-size "$MAX" --desired-capacity "$N"
+echo "$ASG_NAME reset: min $N, max $MAX, desired $N"

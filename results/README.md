@@ -6,7 +6,7 @@ small is committed. Folder names are the ones `harness/exp.sh` writes:
 | Experiment | Folders |
 |---|---|
 | E1 | `E1/run1..3` |
-| E2a, E2b | `E2a_N1..N5/run1..3`, `E2b_N1..N5/run1` |
+| E2a, E2b | `E2a_N1..N4/run1..3`, `E2b_N1..N4/run1` |
 | E3 | `E3/run1..3` |
 | E4 | `E4a/run1`, `E4b/run1`, `E4c/run1..3` (optional `E4d/run1`) |
 | E5 | `E5_naive/run1..3`, `E5_baked/run1..3` |

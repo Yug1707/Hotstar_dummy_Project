@@ -8,14 +8,14 @@ experiment matrix. Owner: **C**. The repo-wide hooks are a single include line i
 | File | What | Plan |
 |---|---|---|
 | `lib.js` | traffic mix (55 % heartbeat, 10 % playback, 20 % match state, 15 % reco), tags, token header, open model, `http_429` counter, summary writer | §6.1 |
-| `step.js` / `fixed.js` / `spike.js` | E1+E2b steps · E2a/E6/E7 fixed rate · E3/E4 match-day spike (12 m 30 s) | §6.2 |
+| `step.js` / `fixed.js` / `spike.js` | E1+E2b steps · E2a/E6/E7 fixed rate · E3/E4 match-day spike (12 m 30 s, peak 2.8 × C1 for the 4-instance cap) | §6.2 |
 | `common.py` | env and `.env.tf`, boto3 clients with adaptive retry, `group_state`, `wait_stable`, `/internal/stats` fetch | §6.3 |
 | `asg_mode.py` | `static N`, `reactive`, `proactive`, `scheduled AT N`, `desired N`, `reset`, plus a self-check | §6.4 |
 | `monitor_asg.py` | `asg_timeline.csv`, `instances.csv`, and `stats.csv` with `--stats` | §6.5 |
 | `proactive_scaler.py` | pre-warm floor plus a ladder on arrival rps; scales out at once, scales in one step per 5 min | §6.6 |
 | `collect_cw.py` | 14 CloudWatch series → `cw/*.csv` | §6.7 |
 | `run_experiment.sh` | one run end to end; a `trap` always resets the ASG, restores SSM and AUTO_SHED, syncs to S3 and releases the lock | §6.8 |
-| `boot_test.sh` | E5: scale 1 → 5 with the monitor at 2 s, then collect `/var/log/hsl-boot.log` over SSM | §7.3 |
+| `boot_test.sh` | E5: scale 1 → 4 with the monitor at 2 s, then collect `/var/log/hsl-boot.log` over SSM | §7.3 |
 | `fleet.py` | SSM Run Command: `auto-shed on/off` (E6), `boot-logs` (E5) | §7.3 |
 | `lab_lock.py` | `s3://<results>/lab.lock`, taken with a conditional write; only one experiment runs at a time | TEAM §1 |
 | `sample_cpu.py` | loadgen CPU % for the validity check (< 70 %) | §6.8 |
@@ -83,7 +83,7 @@ An invalid run is kept, never deleted. Log it in `docs/runbook.md` and run it ag
 | Run | Command |
 |---|---|
 | E1 | `exp.sh E1 1` (then `2`, `3`); put the median knee into `experiments.yaml` → `global.c1` |
-| E2a / E2b | `exp.sh E2a RUN N` with N = 1..5; alternate the order (see `campaign_example.txt`) |
+| E2a / E2b | `exp.sh E2a RUN N` with N = 1..4; alternate the order (see `campaign_example.txt`) |
 | E3 | `exp.sh E3 RUN` |
 | E4 | `exp.sh E4c RUN`, `exp.sh E4a 1`, `exp.sh E4b 1`, optional `exp.sh E4d 1` (AWS scheduled action) |
 | E5 | laptop: `make tf-apply MODE=naive`; loadgen: `exp.sh E5 RUN naive`; then `make tf-apply`, then `exp.sh E5 RUN baked` |

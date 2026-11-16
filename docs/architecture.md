@@ -11,7 +11,7 @@ viewer ──HTTPS──► CloudFront (PriceClass_200, includes India)
                     ├─ default (*)        → S3 site bucket (private, origin access control)   cached
                     ├─ /api/v1/match/*    → ALB                                               cached, max-age=5 from the origin
                     └─ /api/*             → ALB                                               not cached
-ALB :80 ─ rule 1: /internal/* → fixed 404 ─► target group :8000 (/healthz every 5 s) ─► ASG, c6i.large × 1..6, two AZs
+ALB :80 ─ rule 1: /internal/* → fixed 404 ─► target group :8000 (/healthz every 5 s) ─► ASG, c7i-flex.large × 0..4, AZs that offer the type
 ```
 
 - **CloudFront** terminates HTTPS on the default `*.cloudfront.net` name and splits traffic by path. The order of
@@ -22,6 +22,11 @@ ALB :80 ─ rule 1: /internal/* → fixed 404 ─► target group :8000 (/health
   [`harness/asg_mode.py`](../harness/asg_mode.py), so every experiment starts from a known state.
 - **Static dashboard** (`web/`) lives in the S3 bucket and is published with `make publish-site` (sync plus an
   invalidation). It needs no rebuild of the image when results change.
+- **Without CloudFront** (`enable_cloudfront = false`, used until AWS verifies a new Free-plan account) the public URL is
+  `http://<alb>`. The image also carries `web/`, so StreamLite serves the dashboard at `/` itself; `/api/*` works as
+  before, and new results need a new image and AMI instead of `make publish-site`.
+- **AWS Free plan.** Only free-tier-eligible types launch, so the lab uses `c7i-flex.large` (2 vCPU) and caps the ASG
+  at 4 (USD 118 credit, 8 to 16 vCPU quota). See [`docs/report/HOW_WE_BUILT_IT.md`](report/HOW_WE_BUILT_IT.md) section 9.
 
 ## 2. StreamLite, the application
 

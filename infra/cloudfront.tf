@@ -6,13 +6,18 @@
 # PriceClass_200 includes the Indian edge locations; PriceClass_100 does not (fix F3).
 
 # AWS managed policies have fixed, documented IDs (same in every account), so no lookup is needed.
+# enable_cloudfront = false (account not verified for CloudFront yet): no distribution, and the public
+# URL falls back to the ALB over plain HTTP.
 locals {
+  public_url              = var.enable_cloudfront ? "https://${aws_cloudfront_distribution.main[0].domain_name}" : "http://${aws_lb.app.dns_name}"
   cache_policy_optimized  = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
   cache_policy_disabled   = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # Managed-CachingDisabled
   origin_req_all_but_host = "b689b0a8-53d0-40ab-baf2-68738e2966ac" # Managed-AllViewerExceptHostHeader
 }
 
 resource "aws_cloudfront_distribution" "main" {
+  count = var.enable_cloudfront ? 1 : 0
+
   enabled             = true
   comment             = "hsl: StreamLite dashboard + API"
   price_class         = "PriceClass_200"
@@ -78,4 +83,10 @@ resource "aws_cloudfront_distribution" "main" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
+}
+
+# The distribution became optional (count); keeps an existing one instead of replacing it.
+moved {
+  from = aws_cloudfront_distribution.main
+  to   = aws_cloudfront_distribution.main[0]
 }

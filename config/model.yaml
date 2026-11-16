@@ -10,6 +10,8 @@ match_hours: 4
 spot_shares: [0.0, 0.35, 0.70]   # 0.70 is an unverified claim being tested
 sensitivity_viewers_per_rps: [10, 25, 50]
 vcpus_per_instance:
+  c7i-flex.large: 2   # the lab type (AWS Free plan); harness/experiments.yaml global.instance_type
+  m7i-flex.large: 2   # fallback the deploy script picks if c7i-flex is not offered
   c6i.large: 2
   c6i.xlarge: 4
 hulk: {vcpus: 108000, test_hours: 1}   # the 2023 load-test fleet (secondary source)

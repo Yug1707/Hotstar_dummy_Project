@@ -3,10 +3,10 @@
 # `./exp.sh EXP RUN [N|VARIANT]` turns one entry into a run_experiment.sh / boot_test.sh call.
 
 global:
-  instance_type: c6i.large
+  instance_type: c7i-flex.large   # Free-plan eligible (c6i.large is refused); fleet max 4 = 8 vCPU
   work_scale: 2.0          # from T2.7 calibration; must match infra/terraform.tfvars
   c1: 100                  # from E1 (median of 3); update after E1
-  headroom: 1.6            # proactive scaler default
+  headroom: 1.3            # proactive scaler default; 2.8 x C1 burst -> 4 instances = the cap
   slo: {critical_p95_ms: 300, error_rate: 0.01}
   warmup_discard_s: 30
   observe_s: 300           # time after k6 ends to watch scale-in
@@ -14,14 +14,14 @@ global:
 
 experiments:
   E1:  {mode: "static 1", profile: step, env: {GUESS: 150}, runs: 3}
-  E2a: {mode_sweep: [1, 2, 3, 4, 5], profile: fixed, env: {FIXED_RPS: "2.0*c1"}, runs: 3}
+  E2a: {mode_sweep: [1, 2, 3, 4], profile: fixed, env: {FIXED_RPS: "2.0*c1"}, runs: 3}
   # step levels go from 0.1x to 2.0x GUESS, so GUESS = N*c1 puts the expected knee in the middle
-  E2b: {mode_sweep: [1, 2, 3, 4, 5], profile: step, env: {GUESS: "1.0*c1*N"}, runs: 1}
+  E2b: {mode_sweep: [1, 2, 3, 4], profile: step, env: {GUESS: "1.0*c1*N"}, runs: 1}
   E3:  {mode: reactive, profile: spike, runs: 3}
   E4a: {mode: "proactive --prewarm 4 --headroom 0", profile: spike, runs: 1}
   E4b: {mode: proactive, profile: spike, runs: 1}
-  E4c: {mode: "proactive --prewarm 4", profile: spike, runs: 3}
-  E4d: {mode: "scheduled +120 4", profile: spike, runs: 1}   # P2: AWS scheduled action at the ramp start
-  E5:  {boot_test: {from: 1, to: 5}, variants: [naive, baked], runs: 3}
+  E4c: {mode: "proactive --prewarm 3", profile: spike, runs: 3}
+  E4d: {mode: "scheduled +120 3", profile: spike, runs: 1}   # P2: AWS scheduled action at the ramp start
+  E5:  {boot_test: {from: 1, to: 4}, variants: [naive, baked], runs: 3}
   E6:  {mode: "static 2", profile: fixed, env: {FIXED_RPS: "3.0*c1"}, variants: [none, ssm_level1, auto_shed], runs: 3}
   E7:  {mode: "static 2", profile: fixed, env: {MIX: match_only, FIXED_RPS: "3.0*c1", HOLD: 3m}, variants: [alb, cloudfront], runs: 3}

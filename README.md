@@ -21,7 +21,7 @@ spike under different scaling strategies and measure latency, errors, scaling be
 |---|---|---|
 | 0 | Repo, tooling check, sources log, backlog | done |
 | 1 | StreamLite app, tests, container, CI | done (`v0.1`) |
-| 2 | Terraform + Packer + CloudFront live URL | code done, validated offline; first deploy pending (AWS) |
+| 2 | Terraform + Packer + CloudFront live URL | code done, validated offline; AWS Free plan fit (c7i-flex.large, max 4, CloudFront optional); first deploy in progress (`./deploy_aws.sh`) |
 | 3 | k6 harness, ASG mode switcher, proactive scaler | code done, 41 unit tests, local dry run green; live dry run pending (AWS) |
 | 4 | Experiments E1–E7 | run book and tooling ready (`results/README.md`); needs the live stack |
 | 5 | Parser, figures F1–F7, cost model, `results.json` | done, verified on synthetic data; waits for real runs |

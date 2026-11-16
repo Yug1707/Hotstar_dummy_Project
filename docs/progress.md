@@ -33,3 +33,15 @@ Format: done (PR numbers), numbers learned, blockers, next.
 - Numbers learned: none yet. Every figure in the repository so far is from synthetic data and says so.
 - Blockers: vCPU quota and state bucket (A), GHCR package public (repo owner), prices to fill from the AWS Pricing Calculator.
 - Next: `make lab-up`, harness dry run at C1=10, E1 to set `c1`, then E2 onwards; `make analyze` and `make publish-site` after each.
+
+### Day 3, later (16 Nov) — AWS Free plan
+- Done: the account is on the AWS Free plan (USD 118 credit, 8 vCPU quota): `c6i.large` is refused, so app, loadgen and
+  Packer use `c7i-flex.large`; the ASG cap is 4 and the spike profile is scaled to fit (peak 2.0 x C1, bursts 2.8 x C1,
+  headroom 1.3, prewarm 3); CloudFront is optional until AWS verifies the account (URL falls back to `http://<alb>`,
+  and the app serves the dashboard from the image); `deploy_aws.sh` (root) picks a free-tier type, checks the quota,
+  retries the first-run IAM races and has `pause`/`resume`. `scripts/deploy_aws.sh` now forwards to it.
+  Analysis, dashboard and report docs updated to the new type and cap. Story in `docs/report/HOW_WE_BUILT_IT.md`.
+- Verified offline: 7 terraform test runs, harness 41, app 39, analysis 18 tests, shellcheck.
+- Numbers: AMI built on the second deploy run (Packer 5 m 30 s).
+- Blockers: CloudFront account verification (support case), vCPU quota increase to 16.
+- Next: finish the first deploy, E1 on `c7i-flex.large`, then E2 onwards.

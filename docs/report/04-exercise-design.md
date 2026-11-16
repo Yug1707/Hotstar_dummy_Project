@@ -16,9 +16,10 @@
 **StreamLite** is a FastAPI service with four request classes of known CPU cost: critical (`playback/start` 15 ms, `heartbeat` 2 ms),
 public and cacheable (`match/state` 1 ms, `Cache-Control: public, max-age=5`), non-critical (`recommendations` 40 ms) and
 infrastructure (`healthz`, `whoami`). The cost is a calibrated CPU burn, multiplied by one `WORK_SCALE` factor chosen so that a
-`c6i.large` saturates at about 100 requests per second. Statistics count arrivals, not completions. Section 3 of
-[`docs/architecture.md`](../architecture.md) gives the infrastructure: CloudFront, ALB, an Auto Scaling Group of one to six
-`c6i.large` instances across two AZs, a baked AMI, and a load generator (`c6i.xlarge`) in the same region.
+`c7i-flex.large` saturates at about 100 requests per second. Statistics count arrivals, not completions. Section 3 of
+[`docs/architecture.md`](../architecture.md) gives the infrastructure: CloudFront, ALB, an Auto Scaling Group of one to four
+`c7i-flex.large` instances (the AWS Free plan only launches free-tier-eligible types), a baked AMI, and a load
+generator (`c7i-flex.large`) in the same region.
 
 ## 4.3 Load profiles
 

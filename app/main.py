@@ -155,6 +155,6 @@ def internal_stats():
     return JSONResponse(body, headers=NO_STORE)
 
 
-# ---- static dashboard (local dev; production serves web/ from S3 via CloudFront) ---------------
+# ---- static dashboard: local dev, and production until CloudFront exists (then S3 via CloudFront serves it) ---
 if os.path.isdir(config.CFG.web_dir):
     app.mount("/", StaticFiles(directory=config.CFG.web_dir, html=True), name="web")

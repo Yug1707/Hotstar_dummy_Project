@@ -8,6 +8,9 @@ mock_provider "aws" {
   mock_data "aws_subnets" {
     defaults = { ids = ["subnet-0aaa", "subnet-0bbb", "subnet-0ccc"] }
   }
+  mock_data "aws_ec2_instance_type_offerings" {
+    defaults = { locations = ["ap-south-1a", "ap-south-1b", "ap-south-1c"] }
+  }
   mock_data "aws_ssm_parameter" {
     defaults = { value = "ami-0a12023stock0000" }
   }
@@ -66,22 +69,22 @@ run "baked_demo_stack" {
 
   # F3: Indian edge locations
   assert {
-    condition     = aws_cloudfront_distribution.main.price_class == "PriceClass_200"
+    condition     = aws_cloudfront_distribution.main[0].price_class == "PriceClass_200"
     error_message = "CloudFront must use PriceClass_200"
   }
   # behaviour order: the cached match path must win over /api/*
   assert {
-    condition = [for b in aws_cloudfront_distribution.main.ordered_cache_behavior : b.path_pattern] == [
+    condition = [for b in aws_cloudfront_distribution.main[0].ordered_cache_behavior : b.path_pattern] == [
       "/api/v1/match/*", "/api/*"
     ]
     error_message = "ordered behaviours must be /api/v1/match/* then /api/*"
   }
   assert {
-    condition     = aws_cloudfront_distribution.main.ordered_cache_behavior[1].origin_request_policy_id == "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+    condition     = aws_cloudfront_distribution.main[0].ordered_cache_behavior[1].origin_request_policy_id == "b689b0a8-53d0-40ab-baf2-68738e2966ac"
     error_message = "/api/* must forward viewer headers (X-Forwarded-For for the rate limiter)"
   }
   assert {
-    condition = [for b in aws_cloudfront_distribution.main.ordered_cache_behavior : b.cache_policy_id] == [
+    condition = [for b in aws_cloudfront_distribution.main[0].ordered_cache_behavior : b.cache_policy_id] == [
       "658327ea-f89d-4fab-a63d-7e88639e58f6", "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
     ]
     error_message = "match state is cached (CachingOptimized), the rest of /api/* is not (CachingDisabled)"
@@ -117,8 +120,13 @@ run "baked_demo_stack" {
     error_message = "baked user_data must write the env file, start the service and never contain the token"
   }
   assert {
-    condition     = aws_autoscaling_group.app.health_check_grace_period == 60 && aws_autoscaling_group.app.max_size == 6
-    error_message = "baked ASG: grace 60 s, max 6"
+    condition     = aws_autoscaling_group.app.health_check_grace_period == 60 && aws_autoscaling_group.app.max_size == 4
+    error_message = "baked ASG: grace 60 s, max 4"
+  }
+  # Free plan: only free-tier-eligible types launch (c6i.large is refused)
+  assert {
+    condition     = aws_launch_template.app.instance_type == "c7i-flex.large" && length(aws_launch_template.app.credit_specification) == 0
+    error_message = "app must default to c7i-flex.large, with no t* credit block"
   }
   # F10: token is a SecureString
   assert {
@@ -181,10 +189,23 @@ run "naive_requires_image" {
   expect_failures = [aws_launch_template.app]
 }
 
-run "asg_max_capped_at_6" {
+run "asg_max_capped_at_4" {
   command = plan
-  variables { asg_max = 7 }
+  variables { asg_max = 5 }
   expect_failures = [var.asg_max]
+}
+
+run "without_cloudfront" {
+  command = apply
+  variables { enable_cloudfront = false }
+
+  assert {
+    condition = (
+      length(aws_cloudfront_distribution.main) == 0 && length(aws_s3_bucket_policy.site) == 0 &&
+      output.cloudfront_url == "http://hsl-alb-123.ap-south-1.elb.amazonaws.com" && output.cloudfront_id == ""
+    )
+    error_message = "enable_cloudfront = false: no distribution, URL falls back to the ALB"
+  }
 }
 
 run "lab_session" {
@@ -195,8 +216,8 @@ run "lab_session" {
   }
 
   assert {
-    condition     = length(aws_instance.loadgen) == 1 && aws_instance.loadgen[0].instance_type == "c6i.xlarge"
-    error_message = "lab-up must create one c6i.xlarge loadgen"
+    condition     = length(aws_instance.loadgen) == 1 && aws_instance.loadgen[0].instance_type == "c7i-flex.large"
+    error_message = "lab-up must create one c7i-flex.large loadgen"
   }
   assert {
     condition = (

@@ -36,12 +36,12 @@
   <path class="l" d="M520 176H570"/>
   <rect class="a" x="570" y="96" width="170" height="168" rx="8"/>
   <text x="655" y="120" text-anchor="middle" font-weight="600">Auto Scaling Group</text>
-  <text class="s" x="655" y="136" text-anchor="middle">c6i.large, 1 to 6, two AZs</text>
+  <text class="s" x="655" y="136" text-anchor="middle">c7i-flex.large, 0 to 4 (Free plan)</text>
   <rect class="n" x="590" y="148" width="130" height="28" rx="6"/><text class="s" x="655" y="166" text-anchor="middle" style="opacity:1">StreamLite :8000</text>
   <rect class="n" x="590" y="184" width="130" height="28" rx="6"/><text class="s" x="655" y="202" text-anchor="middle" style="opacity:1">StreamLite :8000</text>
   <rect class="n" x="590" y="220" width="130" height="28" rx="6" style="stroke-dasharray:4 3"/><text class="s" x="655" y="238" text-anchor="middle" style="opacity:1">… scaled out</text>
 
-  <rect class="w" x="400" y="290" width="120" height="48" rx="8"/><text x="460" y="311" text-anchor="middle" font-weight="600">k6 loadgen</text><text class="s" x="460" y="328" text-anchor="middle">c6i.xlarge, same region</text>
+  <rect class="w" x="400" y="290" width="120" height="48" rx="8"/><text x="460" y="311" text-anchor="middle" font-weight="600">k6 loadgen</text><text class="s" x="460" y="328" text-anchor="middle">c7i-flex.large, same region</text>
   <path class="l" d="M460 290V212"/>
   <path class="l d" d="M520 314H655V264"/><text class="s" x="590" y="306" text-anchor="middle">:8000 /internal/stats</text>
 

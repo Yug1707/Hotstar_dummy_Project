@@ -72,7 +72,7 @@ def captions(d: make_plots.Data, c1: float, runs: dict[str, dict]) -> dict[str, 
         f"The knee sits between one and two instances. N = {n('F1')} runs, C1 = {c1:g} rps, c6i.large.",
         "F2": f"F2: Match-day spike, reactive vs proactive. Reactive capacity arrives late; "
         f"proactive stays inside the SLO. N = {n('F2')} runs, median run shown.",
-        "F3": "F3: SLO-violation seconds and critical error rate per scaling strategy. Pre-warming removes the violations.",
+        "F3": "F3: SLO-violation seconds and critical error rate per scaling strategy. Pre-warming removes them.",
         "F4": f"F4: Time from launch to first healthy target for each new instance, naive vs baked AMI. "
         f"N = {n('F4')} runs per mode.",
         "F5": f"F5: Critical p95 and shed requests with no degradation, a manual degrade level and auto-shed. "

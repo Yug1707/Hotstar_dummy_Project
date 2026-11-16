@@ -50,9 +50,10 @@ def boot_run(out: Path, exp: str, run: int, label: str, seed: int) -> None:
         w = csv.DictWriter(f, fieldnames=cols)
         w.writeheader()
         w.writerows(rows)
+    all_healthy = max(float(r["first_healthy_ts"]) for r in rows) - t0
     meta = {"exp": exp, "run": run, "valid": True, "mode": f"boot {label}", "profile": "none", "label": label,
             "from": 1, "to": 5, "scale_start_ts": t0,
-            "all_healthy_s": max(float(r["first_healthy_ts"]) for r in rows) - t0, "new_instances": ids, "notes": "synthetic"}  # fmt: skip
+            "all_healthy_s": all_healthy, "new_instances": ids, "notes": "synthetic"}  # fmt: skip
     (d / "meta.json").write_text(json.dumps(meta, indent=1))
 
 

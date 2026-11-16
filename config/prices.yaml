@@ -1,0 +1,15 @@
+# Prices are filled in by a human from the AWS Pricing Calculator. The code never contains a price
+# (plan section 8.5). While a value is null the cost model prints "price missing" and the dashboard shows
+# the instance counts only. Fill every value from one calculator estimate and keep `retrieved` current.
+retrieved: null              # e.g. 2026-11-15
+source: null                 # the calculator estimate URL
+region: ap-south-1
+ec2_on_demand_usd_per_h:
+  c6i.large: null
+  c6i.xlarge: null
+spot_discount_pct:           # observed range from the Spot price history, as a percentage off on-demand
+  c6i.large: null
+alb_usd_per_h: null
+alb_lcu_usd_per_h: null
+public_ipv4_usd_per_h: 0.005   # AWS public IPv4 charge, per address-hour
+cloudfront_usd_per_10k_https_requests_india: null

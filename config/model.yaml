@@ -1,0 +1,15 @@
+# Assumptions of the cost extrapolation (E8). Every output table lists these.
+viewers_per_rps: 25          # 25.3M concurrent viewers vs ~1M rps (2019); approximate, sensitivity 10..50
+planning_utilisation: 0.8    # fraction of C1 an instance is planned to carry
+peaks:                       # concurrent viewers; confidence labels live in docs/sources.md
+  ipl_2019: 10300000
+  ipl_2019_final: 18600000
+  wc_2019: 25300000
+  wc_2023_final: 59000000
+match_hours: 4
+spot_shares: [0.0, 0.35, 0.70]   # 0.70 is an unverified claim being tested
+sensitivity_viewers_per_rps: [10, 25, 50]
+vcpus_per_instance:
+  c6i.large: 2
+  c6i.xlarge: 4
+hulk: {vcpus: 108000, test_hours: 1}   # the 2023 load-test fleet (secondary source)

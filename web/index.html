@@ -117,11 +117,11 @@
   <section id="limits">
     <h2>What this does not show</h2>
     <ul>
-      <li><b>Tiny scale.</b> One to six instances stand in for tens of thousands; the extrapolation is arithmetic, not a measurement.</li>
-      <li><b>Synthetic CPU model.</b> StreamLite burns a calibrated amount of CPU per request; real playback paths have databases, caches and licences.</li>
-      <li><b>Same-region load generator.</b> Network latency and CDN edge behaviour are much kinder than a real audience spread over India.</li>
-      <li><b>Few runs.</b> Three runs per arm give a median and a range, not a confidence interval; one instance type; CloudWatch has 1-minute granularity.</li>
-      <li><b>Derived ratio.</b> 25 viewers per request-per-second comes from two public peak numbers and is a planning assumption, not a measurement.</li>
+      <li><b>Scale.</b> At most six small instances and a few hundred requests per second: the lab reproduces the shape of the problem, not Hotstar's magnitude.</li>
+      <li><b>Same-region load generator.</b> Internet latency, mobile networks and real CDN behaviour are not represented.</li>
+      <li><b>No video.</b> The multi-terabit video delivery goes through CDNs and is not modelled; the API tier is one slice of the platform. StreamLite also burns a calibrated amount of CPU instead of calling databases and caches.</li>
+      <li><b>A derived ratio.</b> 25 viewers per request-per-second comes from rounded public numbers: treat the extrapolation as an order-of-magnitude estimate. Three runs per arm give a median and a range, not a confidence interval.</li>
+      <li><b>Unverified claims.</b> Hotstar's cost and Spot-share figures are not confirmed, so the lab tests sensitivity instead of asserting them.</li>
     </ul>
   </section>
 </main>

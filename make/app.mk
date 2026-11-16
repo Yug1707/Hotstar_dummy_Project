@@ -6,9 +6,9 @@ APP_ENV := IMDS_ENABLED=false SSM_MODE=off LOADTEST_TOKEN=local
 
 venv: ## create .venv with app + dev dependencies
 	@if command -v uv >/dev/null 2>&1; then \
-	  uv venv -q -p 3.12 .venv && uv pip install -q --python .venv/bin/python -r app/requirements-dev.txt; \
+	  uv venv -q -p 3.12 .venv && uv pip install -q --python .venv/bin/python -r app/requirements-dev.txt -r analysis/requirements.txt; \
 	else \
-	  python3.12 -m venv .venv && .venv/bin/pip install -q -r app/requirements-dev.txt; \
+	  python3.12 -m venv .venv && .venv/bin/pip install -q -r app/requirements-dev.txt -r analysis/requirements.txt; \
 	fi
 	@echo "ok: .venv ready"
 

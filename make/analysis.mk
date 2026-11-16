@@ -4,7 +4,7 @@ PYA ?= .venv/bin/python
 
 .PHONY: venv-analysis analyze analyze-full analysis-test fake-campaign
 
-venv-analysis: ## install pandas, matplotlib, ... into .venv
+venv-analysis: ## (make venv already installs these) add analysis dependencies to an older .venv
 	@if command -v uv >/dev/null 2>&1; then uv pip install -q --python $(PYA) -r analysis/requirements.txt; \
 	else .venv/bin/pip install -q -r analysis/requirements.txt; fi
 

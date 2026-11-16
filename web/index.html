@@ -72,7 +72,27 @@
     </div>
   </section>
 
-  <!-- live panel, burst test and cost calculator are added by the following commits -->
+  <section id="live">
+    <h2>Live: who is serving you</h2>
+    <p>Polls <code>/api/v1/whoami</code> once a second while this tab is visible. One browser keeps one connection open,
+      so it usually sticks to one instance; the burst test below spreads requests over several connections' worth of time.</p>
+    <div class="card" id="live-card">
+      <div class="row"><b id="live-instance">connecting…</b><span class="muted" id="live-az"></span></div>
+      <div class="muted" id="live-meta"></div>
+      <div id="live-bars" aria-live="off"></div>
+    </div>
+  </section>
+
+  <section id="burst">
+    <h2>Mini burst test</h2>
+    <p>Sends 100 requests to <code>/api/v1/recommendations</code> over 5 seconds (20 per second, the public rate limit) and plots each
+      request's latency, coloured by the instance that answered. Recommendations are the non-critical, degradable endpoint.</p>
+    <div class="row"><button id="burst-btn" type="button">Run 100-request burst</button><span class="muted" id="burst-status"></span></div>
+    <div class="chart" style="margin-top:12px"><canvas id="burst-chart" role="img" aria-label="Latency of each burst request, coloured by instance"></canvas></div>
+    <p class="note" id="burst-summary"></p>
+  </section>
+
+  <!-- the cost calculator is added by the next commit -->
 
   <section id="limits">
     <h2>What this does not show</h2>
@@ -94,5 +114,7 @@
 <script src="js/util.js" defer></script>
 <script src="js/facts.js" defer></script>
 <script src="js/results.js" defer></script>
+<script src="js/live.js" defer></script>
+<script src="js/burst.js" defer></script>
 </body>
 </html>

@@ -148,10 +148,11 @@ def money(x: float | None) -> str:
 
 def markdown(r: dict) -> str:
     a = r["assumptions"]
+    price_txt = "not set" if r["price_usd_per_h"] is None else money(r["price_usd_per_h"]) + "/h"
     out = [
         "# E8: cost model",
         "",
-        f"Instance **{r['instance_type']}**, C1 = {r['c1']:g} rps, price {'not set' if r['price_usd_per_h'] is None else money(r['price_usd_per_h']) + '/h'} "
+        f"Instance **{r['instance_type']}**, C1 = {r['c1']:g} rps, price {price_txt} "
         f"(retrieved {r['prices_retrieved'] or 'n/a'}).",
         f"viewers per instance = C1 x {a['planning_utilisation']} x {a['viewers_per_rps']} = "
         f"**{a['viewers_per_instance']:,.0f}**.",

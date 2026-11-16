@@ -15,6 +15,6 @@ select = ["E", "F", "I", "B", "UP", "BLE"]
 known-first-party = ["conftest", "config", "work", "stats", "degrade", "ratelimit", "imds", "main"]
 
 [tool.pytest.ini_options]
-pythonpath = ["app"]
-testpaths = ["app/tests"]
+pythonpath = ["app", "."]
+testpaths = ["app/tests", "analysis/tests"]
 markers = ["slow: CPU-timing tests, skipped in CI"]

@@ -23,6 +23,7 @@ manifest.json
 results/*/*/raw/
 results/**/k6.csv.gz
 results/**/*.parquet
+results/**/aggregates.csv.gz
 results/FAKE_*/
 
 # Secrets and local env

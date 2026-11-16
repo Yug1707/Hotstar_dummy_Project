@@ -9,6 +9,8 @@ Scaling Group, serve it on a public HTTPS URL through CloudFront, then use k6 to
 spike under different scaling strategies and measure latency, errors, scaling behaviour and cost.
 
 - Live URL: _after the first deploy (`make tf-apply`, see [`infra/README.md`](infra/README.md)), tag `v0.2`_
+- Architecture: [`docs/architecture.md`](docs/architecture.md) · Report: [`docs/report/`](docs/report/README.md) ·
+  Viva: [`docs/viva.md`](docs/viva.md)
 - Plans: [`docs/IMPLEMENTATION_PLAN_DETAILED.md`](docs/IMPLEMENTATION_PLAN_DETAILED.md) ·
   [`docs/TEAM_PLAN_3_PEOPLE.md`](docs/TEAM_PLAN_3_PEOPLE.md) · [original plan (PDF)](docs/original-plan.pdf)
 - Progress log: [`docs/progress.md`](docs/progress.md)
@@ -20,8 +22,11 @@ spike under different scaling strategies and measure latency, errors, scaling be
 | 0 | Repo, tooling check, sources log, backlog | done |
 | 1 | StreamLite app, tests, container, CI | done (`v0.1`) |
 | 2 | Terraform + Packer + CloudFront live URL | code done, validated offline; first deploy pending (AWS) |
-| 3 | k6 harness, ASG mode switcher, proactive scaler | – |
-| 4–7 | Experiments, analysis, dashboard, report | – |
+| 3 | k6 harness, ASG mode switcher, proactive scaler | code done, 41 unit tests, local dry run green; live dry run pending (AWS) |
+| 4 | Experiments E1–E7 | run book and tooling ready (`results/README.md`); needs the live stack |
+| 5 | Parser, figures F1–F7, cost model, `results.json` | done, verified on synthetic data; waits for real runs |
+| 6 | Dashboard (case, results, live panel, burst test, cost calculator) | done; shows "results pending" until `make analyze` has data |
+| 7 | README, architecture, report, viva | docs written; result sections and slides fill in after Phase 4 |
 
 ## Quick start (local)
 
@@ -33,6 +38,9 @@ make dev             # http://localhost:8000  (reload on change)
 make image           # docker build -f app/Dockerfile -t streamlite:<sha> .
 make run-image       # run the container on :8000
 make tf-test         # Terraform tests against mock AWS (no account needed)
+make analysis-test   # parser, figures, cost model and export on synthetic data
+make fake-campaign   # synthetic E1-E7 campaign -> parse -> figures (results/FAKE_*, git-ignored)
+make analyze         # committed summaries -> F1-F7 -> cost model -> web/data/results.json
 ```
 
 Deploying to AWS: [`infra/README.md`](infra/README.md).
@@ -64,14 +72,13 @@ Configuration is environment-only. See `app/config.py` and §1.2 of the detailed
 
 ```
 app/        StreamLite (FastAPI) + tests + Dockerfile
-web/        static dashboard (Phase 6)
+web/        static dashboard: case, results, live panel, burst test, cost calculator (Phase 6)
 scripts/    doctor.sh, calibrate.py, create_issues.sh
 make/       per-owner Makefile fragments (infra.mk, app.mk, lab.mk, analysis.mk)
 infra/      Phase 2 in one folder: Terraform, Packer, boot scripts, smoke test
-loadtest/   k6 scripts (Phase 3)
-automation/ asg_mode, monitor, proactive scaler, runner (Phase 3)
-analysis/   parser, plots, cost model (Phase 5)
-config/     experiments.yaml, model.yaml, prices.yaml
+harness/    k6 profiles, asg_mode, monitor, proactive scaler, runner, experiments.yaml (Phase 3)
+analysis/   parse_k6, make_plots, cost_model, export_results, fake_run/fake_campaign (Phase 5)
+config/     model.yaml (cost assumptions), prices.yaml (filled by hand from the AWS calculator)
 results/    E1..E8 (raw/ is git-ignored; summary.json + png committed)
 docs/       plans, sources, runbook, progress, report
 ```

@@ -32,7 +32,7 @@
 
   <section id="facts">
     <h2>The case</h2>
-    <p>Peak concurrent viewers on Hotstar, by event. Each bar links to its row in the sources log, with how far we trust it.</p>
+    <p>Peak concurrent viewers on Hotstar, by event. Each badge links to the sources log and says how far we trust the number.</p>
     <div class="chart tall"><canvas id="peaks" aria-label="Peak concurrent viewers by event" role="img"></canvas></div>
     <ul class="badges" id="peak-badges"></ul>
     <p class="note">The 2023 final is reported as 59 M by the company and 61 M by a secondary source; we use 59 M and treat the other as a conflict, not an average.
@@ -56,7 +56,23 @@
     </div>
   </section>
 
-  <!-- results, live panel, burst test and cost calculator are added by the following commits -->
+  <section id="results">
+    <h2>Results</h2>
+    <p class="muted">Every number comes from <code>results/*/summary.json</code> in the repository, three runs per arm unless stated.</p>
+    <div id="results-pending" class="pending" hidden>Results pending: the experiments have not run yet. The rest of the page works without them.</div>
+    <div id="results-body" hidden>
+      <div class="grid" id="tiles"></div>
+      <h3>Latency vs number of instances (F1)</h3>
+      <div class="chart"><canvas id="f1" role="img" aria-label="Critical p95 latency against instance count"></canvas></div>
+      <p class="note" id="f1-cap"></p>
+      <h3>Match-day spike: reactive vs proactive (F2)</h3>
+      <div class="chart tall"><canvas id="f2" role="img" aria-label="p95 latency and healthy instances over time for reactive and proactive scaling"></canvas></div>
+      <p class="note" id="f2-cap"></p>
+      <div id="figures"></div>
+    </div>
+  </section>
+
+  <!-- live panel, burst test and cost calculator are added by the following commits -->
 
   <section id="limits">
     <h2>What this does not show</h2>
@@ -77,5 +93,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
 <script src="js/util.js" defer></script>
 <script src="js/facts.js" defer></script>
+<script src="js/results.js" defer></script>
 </body>
 </html>

@@ -54,7 +54,9 @@ env: ## write terraform outputs to .env.tf for scripts
 
 publish-site: ## upload web/ to the site bucket and invalidate CloudFront
 	@$(LOAD_ENV) && \
-	  aws s3 sync web/ "s3://$$SITE_BUCKET" --delete --region "$$REGION" && \
+	  aws s3 sync web/ "s3://$$SITE_BUCKET" --delete --region "$$REGION" --cache-control "max-age=300" --exclude index.html && \
+	  aws s3 cp web/index.html "s3://$$SITE_BUCKET/index.html" --region "$$REGION" --cache-control "no-cache" \
+	    --content-type "text/html; charset=utf-8" && \
 	  aws cloudfront create-invalidation --distribution-id "$$CLOUDFRONT_ID" --paths '/*' \
 	    --query 'Invalidation.Id' --output text
 

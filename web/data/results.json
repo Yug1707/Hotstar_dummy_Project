@@ -1,0 +1,29 @@
+{
+ "generated_utc": "2026-11-16T04:39:20Z",
+ "pending": true,
+ "c1": 100.0,
+ "instance_type": "c6i.large",
+ "slo": {
+  "critical_p95_ms": 300,
+  "error_rate": 0.01
+ },
+ "key_numbers": [],
+ "figures": [],
+ "series": {},
+ "cost": {
+  "price_c6i_large": null,
+  "spot_discount_pct": null,
+  "viewers_per_instance": 2000.0,
+  "viewers_per_rps": 25,
+  "planning_utilisation": 0.8,
+  "match_hours": 4,
+  "peaks": {
+   "ipl_2019": 10300000,
+   "ipl_2019_final": 18600000,
+   "wc_2019": 25300000,
+   "wc_2023_final": 59000000
+  },
+  "prices_retrieved": null,
+  "strategies": []
+ }
+}

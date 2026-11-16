@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 360" role="img" aria-labelledby="t d">
+  <title id="t">Hotstar Scale Lab architecture</title>
+  <desc id="d">Viewers reach CloudFront over HTTPS. CloudFront serves the static site from S3 and sends API calls to an Application Load Balancer in front of an Auto Scaling Group of StreamLite instances. A load generator drives the ALB directly.</desc>
+  <style>
+    :root { --box: #ffffff; --line: #8a8a85; --ink: #1b1b1b; --accent: #1b9e77; --warn: #d95f02; }
+    @media (prefers-color-scheme: dark) { :root { --box: #232323; --line: #777; --ink: #eee; } }
+    rect.n { fill: var(--box); stroke: var(--line); stroke-width: 1.5; }
+    rect.a { fill: var(--box); stroke: var(--accent); stroke-width: 2; }
+    rect.w { fill: var(--box); stroke: var(--warn); stroke-width: 2; }
+    text { fill: var(--ink); font: 13px system-ui, sans-serif; }
+    text.s { font-size: 11px; opacity: .75; }
+    path.l { fill: none; stroke: var(--line); stroke-width: 1.5; marker-end: url(#ar); }
+    path.d { stroke-dasharray: 5 4; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8a8a85"/></marker></defs>
+
+  <rect class="n" x="20" y="150" width="110" height="52" rx="8"/><text x="75" y="173" text-anchor="middle">Viewers</text><text class="s" x="75" y="190" text-anchor="middle">browser / phone</text>
+  <path class="l" d="M130 176H190"/><text class="s" x="160" y="168" text-anchor="middle">HTTPS</text>
+
+  <rect class="a" x="190" y="120" width="140" height="112" rx="8"/>
+  <text x="260" y="145" text-anchor="middle" font-weight="600">CloudFront</text>
+  <text class="s" x="260" y="167" text-anchor="middle">/ → S3 (cached)</text>
+  <text class="s" x="260" y="184" text-anchor="middle">/api/v1/match/* → 5 s cache</text>
+  <text class="s" x="260" y="201" text-anchor="middle">/api/* → no cache</text>
+  <text class="s" x="260" y="218" text-anchor="middle">OAC to S3</text>
+
+  <path class="l" d="M260 120V70"/>
+  <rect class="n" x="190" y="26" width="140" height="44" rx="8"/><text x="260" y="53" text-anchor="middle">S3 site bucket</text>
+
+  <path class="l" d="M330 176H400"/><text class="s" x="365" y="168" text-anchor="middle">HTTP :80</text>
+  <rect class="a" x="400" y="140" width="120" height="72" rx="8"/>
+  <text x="460" y="165" text-anchor="middle" font-weight="600">ALB</text>
+  <text class="s" x="460" y="183" text-anchor="middle">/internal/* → 404</text>
+  <text class="s" x="460" y="199" text-anchor="middle">round-robin per request</text>
+
+  <path class="l" d="M520 176H570"/>
+  <rect class="a" x="570" y="96" width="170" height="168" rx="8"/>
+  <text x="655" y="120" text-anchor="middle" font-weight="600">Auto Scaling Group</text>
+  <text class="s" x="655" y="136" text-anchor="middle">c6i.large, 1 to 6, two AZs</text>
+  <rect class="n" x="590" y="148" width="130" height="28" rx="6"/><text class="s" x="655" y="166" text-anchor="middle" style="opacity:1">StreamLite :8000</text>
+  <rect class="n" x="590" y="184" width="130" height="28" rx="6"/><text class="s" x="655" y="202" text-anchor="middle" style="opacity:1">StreamLite :8000</text>
+  <rect class="n" x="590" y="220" width="130" height="28" rx="6" style="stroke-dasharray:4 3"/><text class="s" x="655" y="238" text-anchor="middle" style="opacity:1">… scaled out</text>
+
+  <rect class="w" x="400" y="290" width="120" height="48" rx="8"/><text x="460" y="311" text-anchor="middle" font-weight="600">k6 loadgen</text><text class="s" x="460" y="328" text-anchor="middle">c6i.xlarge, same region</text>
+  <path class="l" d="M460 290V212"/>
+  <path class="l d" d="M520 314H655V264"/><text class="s" x="590" y="306" text-anchor="middle">:8000 /internal/stats</text>
+
+  <rect class="n" x="20" y="290" width="330" height="48" rx="8" style="stroke-dasharray:4 3"/>
+  <text class="s" x="185" y="311" text-anchor="middle">Scaling modes (lab only, by script): static N, reactive,</text>
+  <text class="s" x="185" y="327" text-anchor="middle">proactive pre-warm + arrival-rate ladder</text>
+</svg>

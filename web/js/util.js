@@ -29,14 +29,14 @@ const fmtInt = (x) => (x == null ? "n/a" : Math.round(x).toLocaleString("en-US")
 const fmtUsd = (x) => (x == null ? "price pending" : "$" + x.toLocaleString("en-US", { maximumFractionDigits: x < 10 ? 2 : 0 }));
 
 // results.json, or null when missing / pending. The page must work either way (plan 9.2).
-let _results;
-async function loadResults() {
-  if (_results !== undefined) return _results;
+let _raw;
+async function loadRaw() {
+  if (_raw !== undefined) return _raw;
   try {
     const r = await fetch("data/results.json", { cache: "no-cache" });
     if (!r.ok) throw new Error(r.status);
-    const j = await r.json();
-    _results = j.pending ? null : j;
-  } catch (e) { _results = null; }
-  return _results;
+    _raw = await r.json();
+  } catch (e) { _raw = null; }
+  return _raw;
 }
+async function loadResults() { const j = await loadRaw(); return j && !j.pending ? j : null; }

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hotstar Scale Lab</title>
   <meta name="description" content="A scaled-down AWS replica of cricket-streaming traffic spikes: load tests, scaling strategies and cost.">
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -92,7 +93,26 @@
     <p class="note" id="burst-summary"></p>
   </section>
 
-  <!-- the cost calculator is added by the next commit -->
+  <section id="cost">
+    <h2>Cost calculator</h2>
+    <p>How many instances would the lab's design need for a given audience, and what would they cost? Move the sliders;
+      the measured per-instance capacity (C1) comes from the experiments.</p>
+    <div class="card">
+      <label for="cc-viewers">Concurrent viewers: <b id="cc-viewers-out"></b></label>
+      <input id="cc-viewers" type="range" min="0" max="100" value="80" step="1">
+      <label for="cc-vpr">Viewers per request-per-second: <b id="cc-vpr-out"></b></label>
+      <input id="cc-vpr" type="range" min="10" max="50" value="25" step="1">
+      <label for="cc-spot">Spot share of the fleet</label>
+      <select id="cc-spot"><option value="0">0 % (all on-demand)</option><option value="0.35">35 %</option><option value="0.7">70 % (unverified claim)</option></select>
+      <div class="grid" id="cc-out">
+        <div class="tile"><div class="v" id="cc-inst">-</div><div class="l">instances needed</div></div>
+        <div class="tile"><div class="v" id="cc-hour">-</div><div class="l">per hour at peak</div></div>
+        <div class="tile"><div class="v" id="cc-match">-</div><div class="l" id="cc-match-l">for a 4-hour match</div></div>
+      </div>
+      <p class="formula" id="cc-formula"></p>
+      <p class="note" id="cc-note"></p>
+    </div>
+  </section>
 
   <section id="limits">
     <h2>What this does not show</h2>
@@ -116,5 +136,6 @@
 <script src="js/results.js" defer></script>
 <script src="js/live.js" defer></script>
 <script src="js/burst.js" defer></script>
+<script src="js/cost.js" defer></script>
 </body>
 </html>

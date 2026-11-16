@@ -46,19 +46,20 @@ def spike_rate(t: float, c1: float) -> float:
     return c1 * 0.5
 
 
-def profile_for(kind: str, c1: float) -> dict:
+def profile_for(kind: str, c1: float, fixed_mult: float = 2.0, guess: float | None = None) -> dict:
     if kind == "spike":
         return {"name": "spike", "total_s": 750, "c1": c1, "speed": 1, "mix": "default",
                 "events_s": {"ramp": [120, 210], "bursts": [[300, 330], [420, 450], [540, 570]]}}  # fmt: skip
     if kind == "fixed":
-        return {"name": "fixed", "total_s": 330, "warmup_s": 30, "fixed_rps": round(2 * c1), "c1": c1, "speed": 1,
-                "mix": "default"}  # fmt: skip
-    levels = [max(1, round((0.1 + i * 1.9 / 9) * c1)) for i in range(10)]
+        return {"name": "fixed", "total_s": 330, "warmup_s": 30, "fixed_rps": round(fixed_mult * c1),
+                "c1": c1, "speed": 1, "mix": "default"}  # fmt: skip
+    g = guess or c1
+    levels = [max(1, round((0.1 + i * 1.9 / 9) * g)) for i in range(10)]
     steps = [
         {"i": i, "rate": r, "start_s": i * 60, "hold_start_s": i * 60 + 5, "end_s": i * 60 + 60}
         for i, r in enumerate(levels)
     ]
-    return {"name": "step", "guess": c1, "total_s": 600, "steps": steps, "c1": c1, "speed": 1, "mix": "default"}
+    return {"name": "step", "guess": g, "total_s": 600, "steps": steps, "c1": c1, "speed": 1, "mix": "default"}
 
 
 def rate_at(profile: dict, t: float, c1: float) -> float:
@@ -109,7 +110,15 @@ def capacity_schedule(mode: str, n_static: int, profile: dict, rng: random.Rando
     return in_service, timeline, instances
 
 
-def write_k6_csv(path: Path, profile: dict, in_service, c1: float, rng: random.Random) -> int:
+def write_k6_csv(
+    path: Path,
+    profile: dict,
+    in_service,
+    c1: float,
+    rng: random.Random,
+    load_factor: float = 1.0,
+    match_only: bool = False,
+) -> int:
     """Arrivals per second; latency lognormal, inflated and failing once the offered rate exceeds capacity."""
     n = 0
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -118,11 +127,12 @@ def write_k6_csv(path: Path, profile: dict, in_service, c1: float, rng: random.R
         w.writerow(K6_COLS)
         for sec in range(int(profile["total_s"])):
             rate = rate_at(profile, sec + 0.5, c1)
-            rho = rate / (max(1, in_service(sec + 0.5)) * c1)
+            rho = load_factor * rate / (max(1, in_service(sec + 0.5)) * c1)
             for _ in range(max(0, int(rng.gauss(rate, math.sqrt(max(rate, 1)))))):
-                cls, name, _ = rng.choices(CLASSES, weights=[c[2] for c in CLASSES])[0]
+                pool = [c for c in CLASSES if c[1] == "state"] if match_only else CLASSES
+                cls, name, _ = rng.choices(pool, weights=[c[2] for c in pool])[0]
                 inflate = 1.0 if rho < 0.85 else 1.0 + 400.0 * (rho - 0.85) ** 2
-                dur = rng.lognormvariate(math.log(BASE_MS[name] * inflate), 0.35)
+                dur = min(5000.0, rng.lognormvariate(math.log(BASE_MS[name] * inflate), 0.35))  # 5 s k6 timeout
                 failed = 1 if (rho > 1.15 and rng.random() < min(0.6, (rho - 1.15) * 0.8)) else 0
                 if failed:
                     dur = 5000.0
@@ -135,13 +145,25 @@ def write_k6_csv(path: Path, profile: dict, in_service, c1: float, rng: random.R
     return n
 
 
-def make_run(out: Path, exp: str, run: int, kind: str, mode: str, n_static: int, c1: float, seed: int) -> Path:
+def make_run(
+    out: Path,
+    exp: str,
+    run: int,
+    kind: str,
+    mode: str,
+    n_static: int,
+    c1: float,
+    seed: int,
+    fixed_mult: float = 2.0,
+    load_factor: float = 1.0,
+    match_only: bool = False,
+) -> Path:
     rng = random.Random(f"{exp}-{run}-{seed}")
-    profile = profile_for(kind, c1)
+    profile = profile_for(kind, c1, fixed_mult, c1 * n_static)
     in_service, timeline, instances = capacity_schedule(mode, n_static, profile, rng)
     d = out / exp / f"run{run}"
     d.mkdir(parents=True, exist_ok=True)
-    write_k6_csv(d / "raw" / "k6.csv.gz", profile, in_service, c1, rng)
+    write_k6_csv(d / "raw" / "k6.csv.gz", profile, in_service, c1, rng, load_factor, match_only)
     with (d / "asg_timeline.csv").open("w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["ts", "desired", "in_service", "pending", "terminating", "healthy_targets", "unhealthy_targets",

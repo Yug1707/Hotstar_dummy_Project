@@ -149,6 +149,30 @@ def asg_metrics(run: Path, start_ts: float, end_ts: float, ramp_start_s: float |
     return out
 
 
+def timeline_series(dur: pd.DataFrame, run: Path, start_ts: float, total_s: float, bin_s: int = 5) -> dict:
+    """Critical p95 and healthy-instance count per 5 s bin: small enough to commit, enough for F2 and the dashboard."""
+    c = dur[dur["cls"] == "critical"]
+    c = c.assign(b=np.floor(c["ts"] / bin_s).astype(int))
+    p95 = c.groupby("b")["value"].quantile(0.95)
+    rows = read_csv_rows(run / "asg_timeline.csv")
+    ts = np.array([float(r["ts"]) - start_ts for r in rows])
+    healthy = np.array([float(r["healthy_targets"]) for r in rows])
+    t = list(range(0, int(total_s), bin_s))
+    return {
+        "bin_s": bin_s,
+        "t": t,
+        "p95_ms": [round(float(p95[b // bin_s]), 1) if (b // bin_s) in p95.index else None for b in t],
+        "healthy": [int(healthy[ts <= b + bin_s][-1]) if len(ts) and (ts <= b + bin_s).any() else None for b in t],
+    }
+
+
+def origin_requests(run: Path, start_ts: float, end_ts: float) -> int | None:
+    """ALB RequestCount summed over the run window (E7: how many requests reached the origin)."""
+    rows = read_csv_rows(run / "cw" / "alb_request_count_sum.csv")
+    vals = [float(r["value"]) for r in rows if start_ts - 60 <= float(r["ts"]) <= end_ts + 60 and r["value"] != ""]
+    return int(sum(vals)) if vals else None
+
+
 def shed_total(run: Path) -> int | None:
     rows = read_csv_rows(run / "stats.csv")
     if not rows:
@@ -206,6 +230,8 @@ def parse_run(run: Path, slo: dict, warmup_s: float) -> dict:
         "duration_s": round(end - start, 1),
         "requests": int(agg["count"].sum()) if not agg.empty else 0,
         "critical": {k: crit[k] for k in ("p50_ms", "p95_ms", "p99_ms", "error_rate")},
+        "by_class": {c: window_stats(dur, fail, c, lo, hi) for c in sorted(set(dur["cls"]))},
+        "origin_requests": origin_requests(run, start, end),
         "slo_violation_s": slo_violation_seconds(agg, slo, lo),
         "peak_p95_ms": round(float(c_agg["p95"].max()), 1) if not c_agg.empty else None,
         "throughput_rps_max": int(total[total.index >= lo].max()) if len(total) else None,
@@ -217,6 +243,9 @@ def parse_run(run: Path, slo: dict, warmup_s: float) -> dict:
     if profile == "fixed" and meta.get("k6_env"):
         summary["k6_env"] = meta["k6_env"]
     (run / "summary.json").write_text(json.dumps(summary, indent=1) + "\n")
+    if profile == "spike":
+        series = timeline_series(dur, run, start, end - start)
+        (run / "timeline.json").write_text(json.dumps(series) + "\n")
     return summary
 
 

@@ -131,7 +131,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("mode", choices=sorted(ARITY))
     ap.add_argument("args", nargs="*")
     ap.add_argument("--no-wait", action="store_true")
-    ap.add_argument("--quiet-s", type=float, default=120)
+    ap.add_argument("--quiet-s", type=float, default=60)
     ap.add_argument("--timeout-s", type=float, default=900)
     a = ap.parse_args(argv)
     if len(a.args) != ARITY[a.mode]:

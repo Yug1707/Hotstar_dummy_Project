@@ -13,7 +13,7 @@ source "$HERE/labfuncs.sh"
 
 usage() { sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-2}"; }
 
-LABEL="" FROM=1 TO=5 FORCE=0 NO_LOCK=0 NO_S3=0
+LABEL="" FROM=1 TO=4 FORCE=0 NO_LOCK=0 NO_S3=0
 while [ $# -gt 0 ] && [[ $1 == --* ]]; do
   case $1 in
     --label) LABEL=$2; shift ;;
@@ -30,7 +30,7 @@ done
 [ $# -eq 2 ] || usage 2
 EXP=$1 RUN=$2
 [[ $EXP =~ ^[A-Za-z0-9_-]+$ && $RUN =~ ^[0-9]+$ ]] || die "bad EXP or RUN"
-[[ $FROM =~ ^[1-6]$ && $TO =~ ^[1-6]$ && $TO -gt $FROM ]] || die "need 1 <= FROM < TO <= 6"
+[[ $FROM =~ ^[1-4]$ && $TO =~ ^[1-4]$ && $TO -gt $FROM ]] || die "need 1 <= FROM < TO <= 4 (Free-plan fleet cap)"
 
 load_stack_env
 : "${ASG_NAME:?}" "${TG_ARN:?}" "${RESULTS_BUCKET:?}"

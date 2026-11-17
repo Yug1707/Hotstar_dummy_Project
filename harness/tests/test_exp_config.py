@@ -80,7 +80,7 @@ def test_sweep_and_variants():
 def test_cmd_output_is_shell_safe(capsys):
     assert exp_config.main(["cmd", "E4c", "1"]) == 0
     line = capsys.readouterr().out.strip()
-    assert shlex.split(line)[3] == "proactive --prewarm 4"
+    assert shlex.split(line)[3] == "proactive --prewarm 3"
 
 
 # ---- collect_cw ----------------------------------------------------------------------------------

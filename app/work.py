@@ -13,7 +13,7 @@ import config
 
 # Iterations per class at WORK_SCALE=1, aiming at: critical 15 ms, heartbeat 2 ms, state 1 ms, reco 40 ms.
 # Measured with scripts/calibrate.py on a laptop (~9,000 PBKDF2-SHA256 iterations per ms). Re-run it on
-# c6i.large (task T2.7), paste the new table here, then tune WORK_SCALE so one instance saturates near
+# c7i-flex.large (task T2.7; the Free-plan type), paste the new table here, then tune WORK_SCALE so one instance saturates near
 # C1 = 100 rps (expect WORK_SCALE ~ 2 on 2 vCPUs).
 ITER: dict[str, int] = {
     "critical": 135_000,

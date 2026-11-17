@@ -1,16 +1,19 @@
-// E3/E4: the match-day spike (plan §6.2), 12 min 30 s at SPEED=1.
-//   0:00-2:00 pre-match 0.3*C1 · 2:00-3:30 ramp to 3*C1 (Hotstar's ~90 s window) · hold
-//   wickets (4.2*C1 bursts) at 5:00, 7:00, 9:00 · 9:30-12:30 innings break down to 0.5*C1
+// E3/E4: the match-day spike (plan §6.2), 12 min 30 s at SPEED=1. Scaled for the Free-plan fleet
+// (max 4 instances): the peak needs ceil(2.8 * 1.3) = 4 instances at the default headroom.
+//   0:00-2:00 pre-match 0.3*C1 · 2:00-3:30 ramp to 2*C1 (Hotstar's ~90 s window) · hold
+//   wickets (2.8*C1 bursts) at 5:00, 7:00, 9:00 · 9:30-12:30 innings break down to 0.5*C1
 import { pick, C1, BASE_SCN, THRESHOLDS, dur, secs, stagesTotal, summaryWriter } from "./lib.js";
 
 const s = (x, sec) => ({ target: Math.round(x * C1), duration: dur(sec) });
-const burst = () => [s(4.2, 5), s(4.2, 20), s(3.0, 5)];
+const PEAK = 2.0; // match level, x C1
+const BURST = 2.8; // wicket bursts, x C1
+const burst = () => [s(BURST, 5), s(BURST, 20), s(PEAK, 5)];
 const stages = [
   s(0.3, 120), // pre-match
-  s(3.0, 90), //  match start ramp
-  s(3.0, 90), //  hold
-  ...burst(), s(3.0, 90), // wicket 1 + hold
-  ...burst(), s(3.0, 90), // wicket 2 + hold
+  s(PEAK, 90), //  match start ramp
+  s(PEAK, 90), //  hold
+  ...burst(), s(PEAK, 90), // wicket 1 + hold
+  ...burst(), s(PEAK, 90), // wicket 2 + hold
   ...burst(), //  wicket 3
   s(0.5, 180), // innings break
 ];

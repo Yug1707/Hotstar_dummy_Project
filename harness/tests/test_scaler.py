@@ -20,43 +20,43 @@ def drive(scaler: Scaler, asg: FakeASG, schedule: Sequence[tuple[float, float | 
     return out
 
 
-def test_ramp_30_to_300_scales_1_2_4_5():
+def test_ramp_30_to_280_scales_1_2_3_4():
     asg = FakeASG(desired=1)
-    s = Scaler(per_instance_rps=100, headroom=1.6)
-    assert drive(s, asg, [(0, 30), (10, 100), (20, 200), (30, 300)]) == [1, 2, 4, 5]
+    s = Scaler(per_instance_rps=100, headroom=1.3)
+    assert drive(s, asg, [(0, 30), (10, 100), (20, 200), (30, 280)]) == [1, 2, 3, 4]
     assert all(kw["HonorCooldown"] is False for name, kw in asg.calls if name == "set_desired")
 
 
 def test_scale_out_jumps_straight_to_target():
     asg = FakeASG(desired=1)
-    s = Scaler(per_instance_rps=100, headroom=1.6)
-    assert drive(s, asg, [(0, 300)]) == [5]  # one call, not a ladder of +1 steps
+    s = Scaler(per_instance_rps=100, headroom=1.3)
+    assert drive(s, asg, [(0, 280)]) == [4]  # one call, not a ladder of +1 steps
 
 
 def test_load_drop_scales_in_one_step_per_hold_period():
     asg = FakeASG(desired=1)
-    s = Scaler(per_instance_rps=100, headroom=1.6, hold_min=5)
-    drive(s, asg, [(0, 300)])  # -> 5
+    s = Scaler(per_instance_rps=100, headroom=1.3, hold_min=5)
+    drive(s, asg, [(0, 280)])  # -> 4
     ticks = [(t, 30.0) for t in range(10, 1300, 10)]
     hist = drive(s, asg, ticks)
     by_t = dict(zip([t for t, _ in ticks], hist, strict=True))
-    assert by_t[290] == 5  # still holding before 5 min below target
-    assert by_t[310] == 4  # first step down after 5 min
-    assert by_t[600] == 4  # no second step before another 5 min
-    assert by_t[620] == 3
+    assert by_t[290] == 4  # still holding before 5 min below target
+    assert by_t[310] == 3  # first step down after 5 min
+    assert by_t[600] == 3  # no second step before another 5 min
+    assert by_t[620] == 2
     assert min(hist) >= 1
 
 
 def test_target_back_at_desired_resets_the_hold_timer():
     asg = FakeASG(desired=1)
-    s = Scaler(per_instance_rps=100, headroom=1.6, hold_min=5)
-    drive(s, asg, [(0, 300)])  # -> 5, last_change = 0
+    s = Scaler(per_instance_rps=100, headroom=1.3, hold_min=5)
+    drive(s, asg, [(0, 280)])  # -> 4, last_change = 0
     drive(s, asg, [(t, 30.0) for t in range(10, 200, 10)])  # below for 190 s
-    drive(s, asg, [(200, 300.0)])  # load is back: below_since cleared
+    drive(s, asg, [(200, 280.0)])  # load is back: below_since cleared
     ticks = list(range(210, 520, 10))
     hist = dict(zip(ticks, drive(s, asg, [(t, 30.0) for t in ticks]), strict=True))
-    assert hist[500] == 5  # the hold restarted at t=210, so 5 min have not passed yet
-    assert hist[510] == 4
+    assert hist[500] == 4  # the hold restarted at t=210, so 5 min have not passed yet
+    assert hist[510] == 3
 
 
 def test_extrapolates_when_one_instance_times_out():
@@ -75,17 +75,17 @@ def test_no_stats_at_all_never_scales():
 def test_never_above_max_cap():
     asg = FakeASG(desired=1)
     s = Scaler(per_instance_rps=100, headroom=1.6)
-    assert drive(s, asg, [(0, 10_000)]) == [6]
+    assert drive(s, asg, [(0, 10_000)]) == [4]  # MAX_CAP (Free-plan fleet)
 
 
 def test_prewarm_floor_holds_until_floor_until_then_releases():
     asg = FakeASG(desired=1)
-    s = Scaler(per_instance_rps=100, headroom=1.6, prewarm=4, floor_until=100, hold_min=5)
-    assert drive(s, asg, [(0, 10)]) == [4]
-    assert drive(s, asg, [(t, 10.0) for t in range(10, 100, 10)])[-1] == 4  # floor holds
+    s = Scaler(per_instance_rps=100, headroom=1.3, prewarm=3, floor_until=100, hold_min=5)
+    assert drive(s, asg, [(0, 10)]) == [3]
+    assert drive(s, asg, [(t, 10.0) for t in range(10, 100, 10)])[-1] == 3  # floor holds
     # after the floor ends: one step down per 5 min, starting 5 min after it ends
     hist = drive(s, asg, [(t, 10.0) for t in range(100, 720, 10)])
-    assert hist[0] == 4 and hist[-1] == 2
+    assert hist[0] == 3 and hist[-1] == 1
 
 
 def test_headroom_zero_means_floor_only_variant_e4a():
@@ -98,11 +98,11 @@ def test_headroom_zero_means_floor_only_variant_e4a():
 def test_spike_profile_step_is_answered_within_one_tick():
     """Acceptance: desired rises within 10-20 s of a rate step (tick = 10 s, stats window lags <= 10 s)."""
     asg = FakeASG(desired=1)
-    s = Scaler(per_instance_rps=100, headroom=1.6)
-    pre, match = 30.0, 300.0
+    s = Scaler(per_instance_rps=100, headroom=1.3)
+    pre, match = 30.0, 200.0  # spike.js: 0.3 x C1 -> 2.0 x C1
     ticks = [(t, pre) for t in range(0, 120, 10)] + [(t, match) for t in range(120, 200, 10)]
     hist = drive(s, asg, ticks)
-    assert hist[ticks.index((120, match))] == 5
+    assert hist[ticks.index((120, match))] == 3
 
 
 def test_rejects_bad_c1():

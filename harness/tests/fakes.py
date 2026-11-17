@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 
 class FakeASG:
-    def __init__(self, desired: int = 1, min_size: int = 1, max_size: int = 6, instances: list[dict] | None = None):
+    def __init__(self, desired: int = 1, min_size: int = 1, max_size: int = 4, instances: list[dict] | None = None):
         self.desired, self.min, self.max = desired, min_size, max_size
         self.policies: dict[str, dict] = {}
         self.scheduled: dict[str, dict] = {}

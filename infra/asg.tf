@@ -36,8 +36,13 @@ resource "aws_launch_template" "app" {
     enabled = true # 1-minute EC2 metrics
   }
 
-  credit_specification {
-    cpu_credits = "standard" # only matters if instance_type falls back to t3
+  # Only for a burstable fallback (t3/t4g): "unlimited" so a saturated instance is not throttled to
+  # its 20-30 % baseline mid-experiment (that would fake a capacity limit). Costs extra only on t*.
+  dynamic "credit_specification" {
+    for_each = startswith(var.instance_type, "t") ? [1] : []
+    content {
+      cpu_credits = "unlimited"
+    }
   }
 
   user_data = base64encode(templatefile("${path.module}/user_data_${var.user_data_mode}.sh.tftpl", {
@@ -74,7 +79,7 @@ resource "aws_autoscaling_group" "app" {
   min_size                  = var.asg_min
   max_size                  = var.asg_max
   desired_capacity          = var.asg_desired
-  vpc_zone_identifier       = data.aws_subnets.default.ids
+  vpc_zone_identifier       = data.aws_subnets.compute.ids
   target_group_arns         = [aws_lb_target_group.app.arn]
   health_check_type         = "ELB"
   health_check_grace_period = var.user_data_mode == "baked" ? 60 : 240
@@ -106,5 +111,9 @@ resource "aws_autoscaling_group" "app" {
 
   lifecycle {
     ignore_changes = [desired_capacity, min_size, max_size] # fix F1
+    precondition {
+      condition     = length(data.aws_subnets.compute.ids) > 0
+      error_message = "No default subnet is in an AZ that offers ${var.instance_type}. Pick another instance_type."
+    }
   }
 }

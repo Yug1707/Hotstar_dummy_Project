@@ -30,7 +30,7 @@ def test_reactive_installs_exactly_cpu50():
     asg.policies["leftover"] = {}
     desired, errs, cfg = run(asg, "reactive")
     assert desired == 1 and errs == []
-    assert cfg["policies"] == ["cpu50"] and (cfg["min"], cfg["max"]) == (1, 6)
+    assert cfg["policies"] == ["cpu50"] and (cfg["min"], cfg["max"]) == (1, 4)
     pol = asg.policies["cpu50"]
     assert pol["PolicyType"] == "TargetTrackingScaling"
     assert pol["TargetTrackingConfiguration"]["TargetValue"] == 50.0
@@ -41,7 +41,7 @@ def test_proactive_has_no_policies():
     asg = FakeASG()
     asg.policies["cpu50"] = {}
     _, errs, cfg = run(asg, "proactive")
-    assert errs == [] and cfg["policies"] == [] and cfg["max"] == 6
+    assert errs == [] and cfg["policies"] == [] and cfg["max"] == 4
 
 
 def test_scheduled_adds_reactive_and_one_action():
@@ -62,17 +62,17 @@ def test_static_reactive_reset_leaves_nothing_attached():
     _, errs, cfg = run(asg, "reset")
     assert errs == []
     assert cfg["policies"] == [] and cfg["scheduled_actions"] == []
-    assert (cfg["min"], cfg["max"], cfg["desired"]) == (1, 6, 1)
+    assert (cfg["min"], cfg["max"], cfg["desired"]) == (1, 4, 1)
 
 
 def test_desired_only_changes_desired():
     asg = FakeASG()
     run(asg, "proactive")
     asg.calls.clear()
-    desired, errs, cfg = run(asg, "desired", "5")
-    assert desired == 5 and errs == []
+    desired, errs, cfg = run(asg, "desired", "3")
+    assert desired == 3 and errs == []
     assert [c[0] for c in asg.calls] == ["set_desired"]
-    assert (cfg["min"], cfg["max"]) == (1, 6)
+    assert (cfg["min"], cfg["max"]) == (1, 4)
 
 
 def test_self_check_reports_unexpected_policy():

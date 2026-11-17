@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Calibrate the CPU work model (plan §4.6, task T2.7).
 
-Run on the *target* instance type (c6i.large), e.g. inside the image:
+Run on the *target* instance type (c7i-flex.large on the Free plan), e.g. inside the image:
     docker run --rm -e IMDS_ENABLED=false -e SSM_MODE=off --entrypoint python \
         ghcr.io/<org>/streamlite:<sha> scripts/calibrate.py
 

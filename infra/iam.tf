@@ -122,6 +122,12 @@ data "aws_iam_policy_document" "loadgen" {
     actions   = ["s3:GetObject", "s3:PutObject"]
     resources = ["${aws_s3_bucket.results.arn}/*"]
   }
+
+  statement {
+    sid       = "ReleaseLabLock" # harness/run_experiment.sh deletes s3://<results>/lab.lock when it ends
+    actions   = ["s3:DeleteObject"]
+    resources = ["${aws_s3_bucket.results.arn}/lab.lock"]
+  }
 }
 
 resource "aws_iam_role_policy" "loadgen" {

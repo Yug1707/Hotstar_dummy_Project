@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Proactive scaler for E4 (plan §6.6): pre-warm before the match, then a fast ladder on arrival rate.
 
-usage: proactive_scaler.py --per-instance-rps C1 [--headroom 1.6] [--prewarm N] [--floor-until T]
+usage: proactive_scaler.py --per-instance-rps C1 [--headroom 1.3] [--prewarm N] [--floor-until T]
                            [--hold-min 5] [--tick 10] [--out RUN_DIR/scaler.csv] [--duration S]
        proactive_scaler.py --prewarm-only N        set desired N and wait until stable, then exit
 
@@ -12,7 +12,7 @@ extrapolating if some did not answer, then
     target = clamp(max(floor, need), 1, 6)
 Scale out at once (no cooldown). Scale in one step at a time, only after the target has been below
 desired for --hold-min minutes and no change happened for --hold-min minutes. Desired is re-read from
-the ASG every tick. Variants: E4a `--prewarm 4 --headroom 0`, E4b ladder only, E4c `--prewarm 4`.
+the ASG every tick. Variants: E4a `--prewarm 4 --headroom 0`, E4b ladder only, E4c `--prewarm 3`.
 """
 
 from __future__ import annotations
@@ -61,7 +61,7 @@ class Scaler:
     def __init__(
         self,
         per_instance_rps: float,
-        headroom: float = 1.6,
+        headroom: float = 1.3,
         prewarm: int = 1,
         floor_until: float = 0.0,
         hold_min: float = 5.0,
@@ -160,10 +160,10 @@ def run_loop(
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--per-instance-rps", type=float, help="C1 from E1")
-    ap.add_argument("--headroom", type=float, default=1.6)
+    ap.add_argument("--headroom", type=float, default=1.3)
     ap.add_argument("--prewarm", type=int, default=1)
     ap.add_argument("--floor-until", default="0", help="epoch seconds or ISO UTC; prewarm floor holds until then")
-    ap.add_argument("--hold-min", type=float, default=5.0)
+    ap.add_argument("--hold-min", type=float, default=1.0)
     ap.add_argument("--tick", type=float, default=10.0)
     ap.add_argument("--out", help="scaler.csv path")
     ap.add_argument("--duration", type=float, help="stop after this many seconds")

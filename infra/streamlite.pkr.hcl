@@ -26,8 +26,9 @@ variable "region" {
 }
 
 variable "instance_type" {
+  # Free-plan eligible. The AMI is plain x86_64 AL2023, so it also runs on any other x86 type.
   type    = string
-  default = "c6i.large"
+  default = "c7i-flex.large"
 }
 
 source "amazon-ebs" "al2023" {
@@ -80,7 +81,8 @@ build {
   provisioner "shell" {
     script           = "${path.root}/provision.sh"
     environment_vars = ["IMAGE=${var.image}"]
-    execute_command  = "sudo -E bash '{{ .Path }}'"
+    # {{ .Vars }} is what injects environment_vars; without it IMAGE is empty in the script.
+    execute_command = "chmod +x '{{ .Path }}'; sudo env {{ .Vars }} bash '{{ .Path }}'"
   }
 
   post-processor "manifest" {
